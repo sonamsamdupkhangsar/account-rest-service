@@ -5,7 +5,7 @@ logging:
       sonam: debug
 info:
   app:
-    name: Springboot me.sonam.Application
+    name: Springboot me.sonam.account.Application
     description: This is a Springboot application
     version: 1.0.0
 
@@ -17,3 +17,9 @@ management:
 server:
   #  port: 8080
   port: 9001
+
+spring:
+  r2dbc:
+    url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    name: sa
+    password:
