@@ -69,12 +69,18 @@ public class Account implements Persistable<UUID> {
         this.accessDateTime = accessDateTime;
     }
 
+    public void setNewAccount(boolean newAccount) {
+        this.newAccount = newAccount;
+    }
+
     @Override
     public String toString() {
         return "Account{" +
-                "userId=" + userId +
+                "id=" + id +
+                ", userId=" + userId +
                 ", active=" + active +
                 ", accessDateTime=" + accessDateTime +
+                ", newAccount=" + newAccount +
                 '}';
     }
 }

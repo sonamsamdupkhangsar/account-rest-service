@@ -12,7 +12,6 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.dialect.H2Dialect;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -39,7 +38,7 @@ public class AccountRepositoryTests {
 
         R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
         template.insert(Account.class).using(account).then().as(StepVerifier::create).verifyComplete();
-        Flux<Account> findByLastName = accounts.findByUserId(userId);
+        Mono<Account> findByLastName = accounts.findByUserId(userId);
 
 
         findByLastName.as(StepVerifier::create)
@@ -56,7 +55,7 @@ public class AccountRepositoryTests {
 
         R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
         template.insert(Account.class).using(account).then().as(StepVerifier::create).verifyComplete();
-        Flux<Account> findByLastName = accounts.findByUserId(userId);
+        Mono<Account> findByLastName = accounts.findByUserId(userId);
 
 
         findByLastName.as(StepVerifier::create)

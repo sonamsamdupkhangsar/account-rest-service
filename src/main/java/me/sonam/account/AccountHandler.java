@@ -1,6 +1,7 @@
 package me.sonam.account;
 
 import me.sonam.account.repo.AccountRepository;
+import me.sonam.account.repo.entity.Account;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,23 +37,32 @@ public class AccountHandler implements AccountBehaviors {
     }
 
     @Override
-    public Mono<ServerResponse> getById(ServerRequest serverRequest) {
-        LOG.error("getById not implemented");
-        return null;
-    }
-
-    @Override
     public Mono<ServerResponse> activateAccount(ServerRequest serverRequest) {
-        LOG.info("checking account active status");
+        UUID userId = UUID.fromString(serverRequest.pathVariable("userId"));
+        LOG.info("activate account for userId: {}", userId);
 
-        return accountRepository.activeAccount(UUID
-                        .fromString(serverRequest.pathVariable("userId")),
-                LocalDateTime.now())
-                .flatMap(a -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(a))
-                .onErrorResume(e -> Mono.just("Error: "+ e.getMessage())
-                .flatMap(s -> ServerResponse.badRequest()
-                                .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(s)));
+        return accountRepository.findByUserId(userId)
+                .switchIfEmpty(Mono.just(new Account(userId, true, LocalDateTime.now())))
+                .doOnNext(account -> {
+                    if (!account.getActive()){
+                        account.setActive(true);
+                        account.setAccessDateTime(LocalDateTime.now());
+                        account.setNewAccount(false);
+                        LOG.info("set account to active if not");
+                    }
+                    else {
+                        LOG.info("account has been set active");
+                    }
+                })
+                .doOnNext(account -> {
+                    LOG.info("saving account: {}", account.toString());
+                    accountRepository.save(account);
+                })
+                .flatMap(account -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(account))
+             .onErrorResume(throwable -> Mono.just("Error: " + throwable.getMessage())
+             .flatMap(s -> ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+             .bodyValue(s)));
     }
 
 

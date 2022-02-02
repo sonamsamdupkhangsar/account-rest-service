@@ -1,0 +1,22 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: account-minimal-cluster
+  namespace: backend
+spec:
+  teamId: "account"
+  volume:
+    size: 1Gi
+    storageClass: do-block-storage
+  numberOfInstances: 1
+  users:
+    sonam:  # database owner
+    - superuser
+    - createdb
+    sonam_user: []  # role for application foo
+  databases:
+    accountdb: sonam  # dbname: owner
+  preparedDatabases:
+    bar: {}
+  postgresql:
+    version: "13"

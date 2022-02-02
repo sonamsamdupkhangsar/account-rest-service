@@ -16,3 +16,11 @@ management:
 
 server:
   port: 8080
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://${POSTGRES_SERVICE}/${POSTGRES_DBNAME}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+#    properties:
+#      sslMode: REQUIRE
