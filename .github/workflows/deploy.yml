@@ -27,7 +27,7 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Log in to my container register
+      - name: Log in to my container registery
         run: docker login ${{ secrets.IMAGEREGISTRY }} -u ${{ secrets.IMAGEREGISTRY_USERNAME }} -p ${{ secrets.IMAGEREGISTRY_PASSWORD }}
 
       - name: Push image to my container registry
@@ -43,7 +43,7 @@ jobs:
           helm upgrade --install --timeout 5m0s \
             --set "image.repository=${{ secrets.IMAGEREGISTRY }}/$PROJECT_NAME" \
             --set "image.tag=1" \
-            --set "project=$PROJECT_NAME" \
+            --set "project=account-api" \
              $PROJECT_NAME \
             sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
 
