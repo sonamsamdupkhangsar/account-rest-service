@@ -42,7 +42,7 @@ jobs:
           helm repo add sonam https://sonamsamdupkhangsar.github.io/sonam-helm-chart/
           helm install --timeout 5m0s \
             --set "image.repository=${{ secrets.IMAGEREGISTRY }}/$PROJECT_NAME" \
-            --set "image.tag=${{ github.sha }}
+            --set "image.tag=${{ github.sha }}" \
             sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
 
 
