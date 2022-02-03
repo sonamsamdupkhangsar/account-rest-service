@@ -1,7 +1,6 @@
-package me.sonam.temp;
+package me.sonam.account;
 
 import lombok.extern.java.Log;
-import me.sonam.Application;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
