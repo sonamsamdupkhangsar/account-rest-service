@@ -44,6 +44,9 @@ jobs:
             --set "image.repository=${{ secrets.IMAGEREGISTRY }}/$PROJECT_NAME" \
             --set "image.tag=1" \
             --set "project=$PROJECT_NAME" \
+            --set "postgres.secretfile=${{ secrets.POSTGRES_SECRET_FILE }}" \
+            --set "postgres.service=${{ secrets.POSTGRES_SERVICE }}" \
+            --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
              $PROJECT_NAME \
             sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
 
