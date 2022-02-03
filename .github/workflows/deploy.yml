@@ -28,7 +28,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to my container register
-        run: echo ${{ secrets.IMAGEREGISTRY_PASSWORD }} | docker login ${{ secrets.IMAGEREGISTRY }} -u {{ secrets.IMAGEREGISTRY_USERNAME }}
+        run: echo ${{ secrets.IMAGEREGISTRY_PASSWORD }} | docker login ${{ secrets.IMAGEREGISTRY }} -u ${{ secrets.IMAGEREGISTRY_USERNAME }}
 
       - name: Push image to my container registry
         run:  docker push ${{ secrets.IMAGEREGISTRY }}/$(echo ${{ github.repository }} | cut -d / -f2):(echo $GITHUB_SHA | head -c7)
