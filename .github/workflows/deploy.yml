@@ -43,7 +43,7 @@ jobs:
           helm upgrade --install --timeout 5m0s \
             --set "image.repository=${{ secrets.IMAGEREGISTRY }}/$PROJECT_NAME" \
             --set "image.tag=1" \
-            --set "project=account-api" \
+            --set "project=$PROJECT_NAME" \
              $PROJECT_NAME \
             sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
 
