@@ -37,21 +37,21 @@ Build docker image using included Dockerfile.
 Use a Helm chart such as my one here @ [sonam-helm-chart](https://github.com/sonamsamdupkhangsar/sonam-helm-chart):
 
 ```
-helm install account-api sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
+helm install project-api sonam/mychart -f values.yaml --version 0.1.12 --namespace=yournamespace
 ```
 
 ##Instruction for port-forwarding database pod
 ```
-export PGMASTER=$(kubectl get pods -o jsonpath={.items..metadata.name} -l application=spilo,cluster-name=account-minimal-cluster,spilo-role=master -n backend); 
+export PGMASTER=$(kubectl get pods -o jsonpath={.items..metadata.name} -l application=spilo,cluster-name=project-minimal-cluster,spilo-role=master -n yournamespace); 
 echo $PGMASTER;
-kubectl port-forward $PGMASTER 6432:5432 -n backend;
+kubectl port-forward $PGMASTER 6432:5432 -n yournamespace;
 ```
 
 ###Login to database instruction
 ```
-export PGPASSWORD=$(kubectl get secret <SECRET_NAME> -o 'jsonpath={.data.password}' -n backend | base64 -d);
+export PGPASSWORD=$(kubectl get secret <SECRET_NAME> -o 'jsonpath={.data.password}' -n yournamesapce | base64 -d);
 echo $PGPASSWORD;
 export PGSSLMODE=require;
-psql -U <USER> -d accountdb -h localhost -p 6432
+psql -U <USER> -d projectdb -h localhost -p 6432
 
 ```
