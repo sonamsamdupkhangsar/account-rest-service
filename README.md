@@ -1,6 +1,6 @@
-# email-rest-service
+# account-rest-service
 
-This is a Email Rest Service api built using Spring WebFlux. 
+This is a Account Rest Service api built using Spring WebFlux. 
 This is a reactive Java webservice api.
 
 
@@ -23,12 +23,13 @@ Build docker image using included Dockerfile.
 
 ## Push Docker image to repository
 
-`docker push imageregistry.sonam.me/account-rest-service:1.0`
+`docker push imageregistry/account-rest-service:1.0`
 
 ## Deploy Docker image locally
 
-`docker run -e EMAIL_HOST=<HOST> -e EMAIL_PORT=<PORT> \
- -e EMAIL_USERNAME=<EMAIL> -e EMAIL_PASSWORD=<PASSWORD> \
+`docker run -e POSTGRES_USERNAME=dummy \
+ -e POSTGRES_PASSWORD=dummy -e POSTGRES_DBNAME=account \
+  -e POSTGRES_SERVICE=localhost:5432 \
  --publish 8080:8080 imageregistry/account-rest-service:1.0`
 
 
