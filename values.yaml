@@ -48,7 +48,7 @@ ingress:
     #cert-manager.io/issuer: letsencrypt-nginx
 
   hosts:
-    - host: account-api.sonam.cloud
+    - host: account-rest-service.sonam.cloud
       paths:
         - path: /
           pathType: Prefix
