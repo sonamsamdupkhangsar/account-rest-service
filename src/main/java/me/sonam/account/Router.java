@@ -22,8 +22,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
  * Set AccountService methods route for checking active and to actiate acccount
  */
 @Configuration
-@OpenAPIDefinition(info = @Info(title = "Swagger Demo", version = "1.0", description = "Documentation APIs v1.0"))
-
+@OpenAPIDefinition(info = @Info(title = "Account rest service Swagger doc", version = "1.0", description = "Documentation APIs v1.0"))
 public class Router {
     private static final Logger LOG = LoggerFactory.getLogger(Router.class);
 
