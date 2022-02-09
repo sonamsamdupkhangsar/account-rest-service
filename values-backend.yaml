@@ -5,8 +5,6 @@
 replicaCount: 1
 
 image:
-  repository: imageregistry.sonam.me/email-rest-service
-  tag: "1.1"
   pullPolicy: Always
 
 imagePullSecrets:
@@ -50,7 +48,7 @@ ingress:
     #cert-manager.io/issuer: letsencrypt-nginx
 
   hosts:
-    - host: email-api.sonam.cloud
+    - host: account-rest-service.sonam.cloud
       paths:
         - path: /
           pathType: Prefix
@@ -58,9 +56,6 @@ ingress:
     - secretName: sonam.cloud
       hosts:
         - "*.sonam.cloud"
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -80,9 +75,12 @@ tolerations: []
 
 affinity: {}
 
+postgres:
+  port: "5432"
+
+
 envs:
-  - name: SPRING_PROFILES_ACTIVE
-    value: "prod"
+
 
 health:
   liveness:
