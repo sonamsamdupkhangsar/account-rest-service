@@ -1,10 +1,10 @@
-package me.sonam.account;
+package me.sonam.account.handler;
 
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-public interface AccountBehaviors {
+public interface Handler {
     // returns boolean if account is active
     Mono<ServerResponse> isAccountActive(ServerRequest serverRequest);
     /**
@@ -14,4 +14,9 @@ public interface AccountBehaviors {
      * @return
      */
     Mono<ServerResponse> activateAccount(ServerRequest serverRequest);
+    Mono<ServerResponse> emailActivationLink(ServerRequest serverRequest);
+    Mono<ServerResponse> createAccount(ServerRequest serverRequest);
+    Mono<ServerResponse> emailMySecret(ServerRequest serverRequest);
+    Mono<ServerResponse> sendLoginId(ServerRequest serverRequest);
+    Mono<ServerResponse> validateEmailLoginSecret(ServerRequest serverRequest);
 }

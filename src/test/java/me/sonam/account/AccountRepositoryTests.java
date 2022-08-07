@@ -2,6 +2,7 @@ package me.sonam.account;
 
 import me.sonam.account.repo.AccountRepository;
 import me.sonam.account.repo.entity.Account;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -31,36 +32,42 @@ public class AccountRepositoryTests {
     @Autowired
     private AccountRepository accounts;
 
+    @AfterEach
+    public void deleteALl() {
+        accounts.deleteAll().subscribe(unused -> LOG.info("deleted all accounts"));
+    }
+
     @Test
     public void getAllAccounts() {
         UUID userId = UUID.randomUUID();
-        Account account = new Account(userId, false, LocalDateTime.now());
+        String email = "getAllAccounts@sonam.me";
+        Account account = new Account(email, email, false, LocalDateTime.now());
 
         R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
         template.insert(Account.class).using(account).then().as(StepVerifier::create).verifyComplete();
-        Mono<Account> findByLastName = accounts.findByUserId(userId);
-
+        Mono<Account> findByLastName = accounts.findByAuthenticationId(email);
+        accounts.countByAuthenticationId(email).subscribe(integer -> LOG.info("found {} accounts with email: {}", integer, email));
 
         findByLastName.as(StepVerifier::create)
             .assertNext(actual -> {
-                assertThat(actual.getUserId()).isEqualTo(userId);
+                assertThat(actual.getAuthenticationId()).isEqualTo(email);
             })
             .verifyComplete();
     }
 
     @Test
     public void updateAccount() {
-        UUID userId = UUID.randomUUID();
-        Account account = new Account(userId, false, LocalDateTime.now());
+        String email = "updateAccount@sonam.me";
+        Account account = new Account(email, email, false, LocalDateTime.now());
 
         R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
         template.insert(Account.class).using(account).then().as(StepVerifier::create).verifyComplete();
-        Mono<Account> findByLastName = accounts.findByUserId(userId);
+        Mono<Account> findByLastName = accounts.findByAuthenticationId(email);
 
 
         findByLastName.as(StepVerifier::create)
                 .assertNext(actual -> {
-                    assertThat(actual.getUserId()).isEqualTo(userId);
+                    assertThat(actual.getAuthenticationId()).isEqualTo(email);
                 })
                 .verifyComplete();
 

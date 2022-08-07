@@ -28,3 +28,9 @@ POSTGRES_USERNAME: dusername
 POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
+
+email-rest-service: https://email-rest-service.sonam.cloud/email
+emailFrom: ""
+account-activate-link: https://account-rest-service.sonam.cloud/accounts/activate
+emailBody: Please click on this link to activate your account
+secretExpire: 2

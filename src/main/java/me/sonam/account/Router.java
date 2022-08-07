@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import me.sonam.account.handler.AccountHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.RouterOperation;
@@ -47,9 +48,19 @@ public class Router {
     )
     public RouterFunction<ServerResponse> route(AccountHandler handler) {
         LOG.info("building router function");
-        return RouterFunctions.route(GET("/active/{userId}").and(accept(MediaType.APPLICATION_JSON)),
+        return RouterFunctions.route(GET("/accounts/active/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                 handler::isAccountActive)
-                .andRoute(POST("activate/{userId}")
-                .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount);
+                .andRoute(PUT("/accounts/activate/{authenticationId}")
+                .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount)
+                .andRoute(PUT("/accounts/emailactivationlink/{authenticationId}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLink)
+                .andRoute(PUT("/accounts/emailmysecret/{authenticationId}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecret)
+                .andRoute(POST("/accounts/{authenticationId}/{email}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::createAccount)
+                .andRoute(PUT("/accounts/email/authenticationId/{email}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::sendLoginId)
+                .andRoute(PUT("/accounts/validate/secret/{authenticationId}/{secret}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret);
     }
 }

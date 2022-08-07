@@ -12,13 +12,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface AccountRepository extends ReactiveCrudRepository<Account, UUID> {
-    Mono<Boolean> existsByUserIdAndActiveTrue(UUID var1);
-    Mono<Account> findByUserId(UUID userId);
-
-    Mono<Integer> countByUserId(UUID userId);
-
+    Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String var1);
+    Mono<Account> findByAuthenticationId(String authenticationId);
+    Mono<Integer> countByAuthenticationId(String authenticationId);
+    Mono<Account> findByEmail(String email);
+    Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
     @Modifying
     @Query("Update Account a set a.active=true and a.access_date_time= :localDateTime where a.user_id= :userId")
     Mono<Integer> activeAccount(@Param("userId") UUID userId, @Param("localDateTime") LocalDateTime localDateTime);
-
 }

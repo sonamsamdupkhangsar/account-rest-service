@@ -14,7 +14,8 @@ import java.util.UUID;
 public class Account implements Persistable<UUID> {
     @Id
     private UUID id;
-    private UUID userId;
+    private String authenticationId;
+    private String email;
     private Boolean active;
     private LocalDateTime accessDateTime;
 
@@ -24,10 +25,11 @@ public class Account implements Persistable<UUID> {
     public Account() {
     }
 
-    public Account(UUID userId, Boolean active, LocalDateTime localDateTime) {
+    public Account(String authenticationId, String email, Boolean active, LocalDateTime localDateTime) {
         this.newAccount = true;
         this.id = UUID.randomUUID();
-        this.userId = userId;
+        this.email = email;
+        this.authenticationId = authenticationId;
         this.active = active;
         this.accessDateTime = localDateTime;
     }
@@ -45,12 +47,8 @@ public class Account implements Persistable<UUID> {
         this.id = id;
     }
 
-    public UUID getUserId() {
-        return this.userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public String getEmail() {
+        return this.email;
     }
 
     public Boolean getActive() {
@@ -73,11 +71,15 @@ public class Account implements Persistable<UUID> {
         this.newAccount = newAccount;
     }
 
+    public String getAuthenticationId() {
+        return this.authenticationId;
+    }
     @Override
     public String toString() {
         return "Account{" +
                 "id=" + id +
-                ", userId=" + userId +
+                ", email=" + email +
+                ", authenticationId=" + authenticationId +
                 ", active=" + active +
                 ", accessDateTime=" + accessDateTime +
                 ", newAccount=" + newAccount +
