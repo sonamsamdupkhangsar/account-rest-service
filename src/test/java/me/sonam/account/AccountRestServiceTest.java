@@ -104,7 +104,7 @@ public class AccountRestServiceTest {
     public void isAccountActive() {
         final String uuid = UUID.randomUUID().toString();
         LOG.info("check for uuid: {}", uuid);
-        client.get().uri("/accounts/active/"+uuid)
+        client.get().uri("/public/accounts/active/"+uuid)
                 .exchange().expectStatus().isOk();
 
     }
@@ -119,7 +119,7 @@ public class AccountRestServiceTest {
                 .subscribe(account1 -> LOG.info("Saved account in active state"));
 
         LOG.info("activate account for userId: {}", id);
-        client.put().uri("/accounts/activate/" + authenticationId)
+        client.put().uri("/public/accounts/activate/" + authenticationId)
                 .exchange().expectStatus().isOk();
     }
 
@@ -129,7 +129,7 @@ public class AccountRestServiceTest {
         final String authenticationId = "activateAccounttest";
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result  = client.put().uri("/accounts/activate/" + authenticationId)
+        EntityExchangeResult<String> result  = client.put().uri("/public/accounts/activate/" + authenticationId)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         assertThat(result.getResponseBody()).isEqualTo("No account with authenticationId");
@@ -197,7 +197,7 @@ public class AccountRestServiceTest {
 
        // webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/emailactivationlink/"+emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/emailactivationlink/"+emailTo)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody()) ;
@@ -220,7 +220,7 @@ public class AccountRestServiceTest {
     public void emailActivationLinkNoAcount() {
         String emailTo = "emailActivationLinkWithNoAccount@sonam.co";
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/emailactivationlink/"+emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/emailactivationlink/"+emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         assertThat(result.getResponseBody()).isEqualTo("no account with email");
@@ -236,7 +236,7 @@ public class AccountRestServiceTest {
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/emailmysecret/"+emailTo)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -252,7 +252,7 @@ public class AccountRestServiceTest {
     public void emailMySecretForPasswordResetNoAccount() throws InterruptedException {
         String emailTo = "emailActivationLink@sonam.co";
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/emailmysecret/" + emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/emailmysecret/" + emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -267,7 +267,7 @@ public class AccountRestServiceTest {
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/emailmysecret/"+emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -346,7 +346,7 @@ public class AccountRestServiceTest {
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/email/authenticationId/"+emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/email/authenticationId/"+emailTo)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -363,7 +363,7 @@ public class AccountRestServiceTest {
         String emailTo = "sendAuthenticationId@sonam.co";
         String authId = "sendAuthenticationId";
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/email/authenticationId/"+emailTo)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/email/authenticationId/"+emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -380,7 +380,7 @@ public class AccountRestServiceTest {
         LOG.info("put validate secret");
 
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/validate/secret/" + authId + "/" + "123hello")
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/validate/secret/" + authId + "/" + "123hello")
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -397,7 +397,7 @@ public class AccountRestServiceTest {
         LOG.info("put validate secret");
 
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/validate/secret/" + authId + "/" + "123hell")
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/validate/secret/" + authId + "/" + "123hell")
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -414,7 +414,7 @@ public class AccountRestServiceTest {
         LOG.info("put validate secret");
 
 
-        EntityExchangeResult<String> result = webTestClient.put().uri("/accounts/validate/secret/" + authId + "/" + "123hello")
+        EntityExchangeResult<String> result = webTestClient.put().uri("/public/accounts/validate/secret/" + authId + "/" + "123hello")
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());

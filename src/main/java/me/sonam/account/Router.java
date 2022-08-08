@@ -48,19 +48,19 @@ public class Router {
     )
     public RouterFunction<ServerResponse> route(AccountHandler handler) {
         LOG.info("building router function");
-        return RouterFunctions.route(GET("/accounts/active/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
-                handler::isAccountActive)
-                .andRoute(PUT("/accounts/activate/{authenticationId}")
+        return RouterFunctions.route(GET("/public/accounts/active/{authenticationId}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::isAccountActive)
+                .andRoute(PUT("/public/accounts/activate/{authenticationId}")
                 .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount)
-                .andRoute(PUT("/accounts/emailactivationlink/{authenticationId}")
+                .andRoute(PUT("/public/accounts/emailactivationlink/{authenticationId}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLink)
-                .andRoute(PUT("/accounts/emailmysecret/{authenticationId}")
+                .andRoute(PUT("/public/accounts/emailmysecret/{authenticationId}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecret)
                 .andRoute(POST("/accounts/{authenticationId}/{email}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::createAccount)
-                .andRoute(PUT("/accounts/email/authenticationId/{email}")
+                .andRoute(PUT("/public/accounts/email/authenticationId/{email}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::sendLoginId)
-                .andRoute(PUT("/accounts/validate/secret/{authenticationId}/{secret}")
+                .andRoute(PUT("/public/accounts/validate/secret/{authenticationId}/{secret}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret);
     }
 }
