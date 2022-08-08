@@ -54,22 +54,6 @@ ingress:
       hosts:
         - "*.sonam.cloud"
 
-ingressjwtrequired:
-  enabled: true
-  ingressClass: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
-    # pass authId header returned from jwt-rest-service validation of jwt token
-    nginx.ingress.kubernetes.io/auth-response-headers: authId
-  hosts:
-    - host: account-rest-service.sonam.cloud
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: sonam.cloud
-      hosts:
-        - "*.sonam.cloud"
 
 
 resources: {}
