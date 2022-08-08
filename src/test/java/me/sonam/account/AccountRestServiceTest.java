@@ -275,14 +275,23 @@ public class AccountRestServiceTest {
     }
 
     @Test
-    public void createAccount() {
+    public void createAccount() throws InterruptedException {
         String emailTo = "createAccount@sonam.co";
-
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
         EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/"+emailTo+"/"+emailTo)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("saved account with In-Active state");
+        assertThat(result.getResponseBody()).isEqualTo("email sent");
+
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("email sent");
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+
+        LOG.info("assert the path for authenticate was created using path '/create'");
+        assertThat(request.getPath()).startsWith("/email");
     }
 
     @Test

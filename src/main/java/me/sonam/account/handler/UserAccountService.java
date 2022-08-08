@@ -162,7 +162,26 @@ public class UserAccountService implements UserAccount {
                 .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId or email")))
                 .flatMap(aBoolean -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
                 .flatMap(account -> accountRepository.save(account))
-                .flatMap(account -> Mono.just("saved account with In-Active state"));
+                .flatMap(account -> Mono.just("saved account with In-Active state"))
+                 .doOnNext(s -> {
+                     LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
+                    passwordSecretRepository.deleteById(authenticationId);
+                })
+                .flatMap(unused -> {
+                    LOG.info("generate random text: {}", unused);
+                    return generateRandomText(10);
+                })
+                .flatMap(randomText -> Mono.just(new PasswordSecret(authenticationId, randomText,
+                        ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(secretExpiresInHour))))
+                .flatMap(passwordSecret -> {
+                    LOG.info("passwordSecret created");
+                    return passwordSecretRepository.save(passwordSecret);
+                })
+                .map(passwordSecret -> new StringBuilder(emailBody)
+                        .append(accountActivateLink).append("/").append(authenticationId)
+                        .append("/").append(passwordSecret.getSecret())
+                        .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
+                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
     }
 
     @Override
