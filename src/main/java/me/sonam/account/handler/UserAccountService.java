@@ -226,7 +226,7 @@ public class UserAccountService implements UserAccount {
 
     private Mono<String> email(String emailTo, String subject, String messageBody) {
         LOG.info("sending email to {}", emailEp);
-        Email email = new Email(emailFrom, emailTo,"activate account", emailBody);
+        Email email = new Email(emailFrom, emailTo, subject, messageBody);
         WebClient.ResponseSpec spec = webClient.post().uri(emailEp).bodyValue(email).retrieve();
 
         return spec.bodyToMono(String.class).flatMap(s -> {
