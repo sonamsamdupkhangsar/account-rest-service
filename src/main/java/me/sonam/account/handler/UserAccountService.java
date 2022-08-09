@@ -158,6 +158,8 @@ public class UserAccountService implements UserAccount {
         String authenticationId = serverRequest.pathVariable("authenticationId");
         String email = serverRequest.pathVariable("email");
 
+        LOG.info("create account with authenticationId: {} and email: {}", authenticationId, email);
+
         return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId or email")))
                 .flatMap(aBoolean -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
