@@ -26,7 +26,7 @@ spring:
       sslMode: REQUIRE
 
 email-rest-service: http://email-rest-service-mychart.backend.svc.cluster.local:80/internal/email
-emailFrom: ""
+emailFrom: "kecha@sonam.email"
 account-activate-link: https://account-rest-service.sonam.cloud/accounts/activate
 emailBody: Please click on this link to activate your account
 secretExpire: 2
