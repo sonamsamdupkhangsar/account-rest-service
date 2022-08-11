@@ -183,7 +183,8 @@ public class UserAccountService implements UserAccount {
                         .append(accountActivateLink).append("/").append(authenticationId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
-                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
+                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()))
+                .thenReturn("Account created");
 
     }
 
