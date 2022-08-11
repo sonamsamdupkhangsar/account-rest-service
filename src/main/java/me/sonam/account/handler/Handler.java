@@ -16,6 +16,7 @@ public interface Handler {
     Mono<ServerResponse> activateAccount(ServerRequest serverRequest);
     Mono<ServerResponse> emailActivationLink(ServerRequest serverRequest);
     Mono<ServerResponse> createAccount(ServerRequest serverRequest);
+    Mono<ServerResponse> deleteAccount(ServerRequest serverRequest);
     Mono<ServerResponse> emailMySecret(ServerRequest serverRequest);
     Mono<ServerResponse> sendLoginId(ServerRequest serverRequest);
     Mono<ServerResponse> validateEmailLoginSecret(ServerRequest serverRequest);

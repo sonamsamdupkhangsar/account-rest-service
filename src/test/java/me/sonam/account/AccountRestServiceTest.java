@@ -291,6 +291,16 @@ public class AccountRestServiceTest {
 
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/email");
+
+        LOG.info("do a delete on the existing authId");
+        result = webTestClient.delete().uri("/accounts/"+emailTo+"/"+emailTo)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        assertThat(result.getResponseBody()).isEqualTo("account deleted");
+
+        accountRepository.existsByAuthenticationId(emailTo)
+                .subscribe(aBoolean -> LOG.info("checking authId {} still exists: {}", emailTo, aBoolean));
+
     }
 
     @Test
@@ -307,7 +317,7 @@ public class AccountRestServiceTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId or email");
+        assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId");
     }
 
     @Test
@@ -324,24 +334,55 @@ public class AccountRestServiceTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId or email");
+        assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId");
     }
 
     @Test
-    public void createAccountWithExistingEmail() {
+    public void createAccountWithExistingEmailAndActive() {
+        String authId = "createAccountWithExistingAuthId";
+        String emailTo = "createAccountWithExistingEmailAndActive@sonam.email";
+        Account account = new Account(authId, emailTo, true, LocalDateTime.now());
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+        LOG.info("try to POST with the same email/authId");
+        String anotherId = UUID.randomUUID().toString();
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/" + anotherId + "/" + emailTo)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("Account has an email match and the account is in Active state");
+
+
+        LOG.info("do a delete on the existing authId that is active");
+        result = webTestClient.delete().uri("/accounts/"+authId+"/"+emailTo)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        assertThat(result.getResponseBody()).isEqualTo("Account is active, failed to delete");
+
+        accountRepository.existsByAuthenticationId(emailTo)
+                .subscribe(aBoolean -> LOG.info("checking authId {} still exists: {}", emailTo, aBoolean));
+
+    }
+
+    @Test
+    public void createAccountWithExistingEmail() throws InterruptedException {
         String emailTo = "createAccountWithExistingEmail@sonam.co";
         Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
         LOG.info("try to POST with the same email/authId");
         final String authId = "createAccountWithExistingEmail";
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
+        RecordedRequest request = mockWebServer.takeRequest();
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId or email");
+        assertThat(result.getResponseBody()).isEqualTo("Account created");
     }
 
     @Test

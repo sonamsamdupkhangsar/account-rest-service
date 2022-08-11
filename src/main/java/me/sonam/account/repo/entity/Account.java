@@ -14,8 +14,8 @@ import java.util.UUID;
 public class Account implements Persistable<UUID> {
     @Id
     private UUID id;
-    private String authenticationId;
-    private String email;
+    private String authenticationId;    //this should be unique
+    private String email;               // not unique, can be duplicate so accounts can reuse existing emails
     private Boolean active;
     private LocalDateTime accessDateTime;
 

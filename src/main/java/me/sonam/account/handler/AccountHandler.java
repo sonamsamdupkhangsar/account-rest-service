@@ -62,6 +62,15 @@ public class AccountHandler implements Handler {
     }
 
     @Override
+    public Mono<ServerResponse> deleteAccount(ServerRequest serverRequest) {
+        LOG.info("delete account");
+        return userAccount.deleteAccount(serverRequest).flatMap(s ->
+                ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
+                        .fromValue(e.getMessage())));
+    }
+
+    @Override
     public Mono<ServerResponse> emailMySecret(ServerRequest serverRequest) {
         LOG.info("email my secret");
         return userAccount.emailMySecret(serverRequest).flatMap(s ->
