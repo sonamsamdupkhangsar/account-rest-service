@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -277,16 +278,14 @@ public class AccountRestServiceTest {
     @Test
     public void createAccount() throws InterruptedException {
         String emailTo = "createAccount@sonam.co";
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody("email sent"));
         EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/"+emailTo+"/"+emailTo)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
         assertThat(result.getResponseBody()).isEqualTo("email sent");
 
-
-        LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("email sent");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
 

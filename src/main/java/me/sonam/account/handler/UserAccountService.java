@@ -184,6 +184,7 @@ public class UserAccountService implements UserAccount {
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
+
     }
 
     @Override
@@ -231,9 +232,9 @@ public class UserAccountService implements UserAccount {
         Email email = new Email(emailFrom, emailTo, subject, messageBody);
         WebClient.ResponseSpec spec = webClient.post().uri(emailEp).bodyValue(email).retrieve();
 
-        return spec.bodyToMono(String.class).flatMap(s -> {
-            LOG.info("activation email response is: {}", s);
-            return Mono.just(s);
+        return spec.bodyToMono(String.class).flatMap(myemail-> {
+            LOG.info("activation email response is: {}", myemail);
+            return Mono.just("email sent");
         }).onErrorResume(throwable -> Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage())));
     }
 

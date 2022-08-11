@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
+
 /**
  * AccountHandler implements the Handler interface.
  * It handles exception thrown by the UserAccount implementation
@@ -54,7 +56,7 @@ public class AccountHandler implements Handler {
     public Mono<ServerResponse> createAccount(ServerRequest serverRequest) {
         LOG.info("create initial account");
         return userAccount.createAccount(serverRequest).flatMap(s ->
-                ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                ServerResponse.created(URI.create("/accounts/")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
                         .fromValue(e.getMessage())));
     }
