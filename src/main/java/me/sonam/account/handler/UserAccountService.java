@@ -34,7 +34,7 @@ public class UserAccountService implements UserAccount {
     @Value("${emailBody}")
     private String emailBody;
 
-    @Value("${account-activate-link")
+    @Value("${account-activate-link}")
     private String accountActivateLink;
 
     @Value("${secretExpire}")
@@ -185,7 +185,7 @@ public class UserAccountService implements UserAccount {
                     LOG.info("passwordSecret created");
                     return passwordSecretRepository.save(passwordSecret);
                 })
-                .map(passwordSecret -> new StringBuilder(emailBody)
+                .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
                         .append(accountActivateLink).append("/").append(authenticationId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
@@ -234,7 +234,8 @@ public class UserAccountService implements UserAccount {
     }
 
     private Mono<String> email(String emailTo, String subject, String messageBody) {
-        LOG.info("sending email to {}", emailEp);
+        LOG.info("sending email to {}, subject: {}, body: {}", emailEp, subject, messageBody);
+
         Email email = new Email(emailFrom, emailTo, subject, messageBody);
         WebClient.ResponseSpec spec = webClient.post().uri(emailEp).bodyValue(email).retrieve();
 
