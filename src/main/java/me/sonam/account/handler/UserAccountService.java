@@ -25,6 +25,9 @@ public class UserAccountService implements UserAccount {
 
     private WebClient webClient;
 
+    @Value("${activate-authentication-rest-service}")
+    private String activateAuthentication;
+
     @Value("${email-rest-service}")
     private String emailEp;
 
@@ -81,7 +84,18 @@ public class UserAccountService implements UserAccount {
                 .doOnNext(account -> {
                     LOG.info("saving account: {}", account.toString());
                     accountRepository.save(account);
-                }).thenReturn("account activated");
+                })
+                .flatMap(account -> {
+                    LOG.info("send activate webrequest to authentication-rest-service");
+                    StringBuilder stringBuilder = new StringBuilder(activateAuthentication).append(authenticationId);
+                    WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
+
+                    return spec.bodyToMono(String.class).flatMap(myemail-> {
+                        LOG.info("activation response from authentication-rest-service is: {}", myemail);
+                        return Mono.just("activate response from authentication-rest-service endpoint is success");
+                    }).onErrorResume(throwable -> Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage())));
+                })
+                .thenReturn("account activated");
     }
 
     @Override

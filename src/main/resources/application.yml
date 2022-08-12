@@ -25,6 +25,7 @@ spring:
     properties:
       sslMode: REQUIRE
 
+activate-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications/activate/
 email-rest-service: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
 emailFrom: "kecha@sonam.email"
 account-activate-link: https://account-rest-service.sonam.cloud/accounts/activate

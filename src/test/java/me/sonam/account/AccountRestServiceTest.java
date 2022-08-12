@@ -60,6 +60,7 @@ public class AccountRestServiceTest {
     private static MockWebServer mockWebServer;
 
     private static String emailEndpoint = "http://localhost:{port}/email";
+    private static String activateAuthenticationEndpoint = "http://localhost:{port}/authentications/activate/";
 
     @Before
     public void setUp() {
@@ -91,7 +92,7 @@ public class AccountRestServiceTest {
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) throws IOException {
         r.add("email-rest-service", () -> emailEndpoint.replace("{port}", mockWebServer.getPort() + ""));
-
+        r.add("activate-authentication-rest-service", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
         LOG.info("updated email-rest-service properties: {}" );
         LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
     }
@@ -119,9 +120,19 @@ public class AccountRestServiceTest {
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in active state"));
 
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("activate response from authentication-rest-service endpoint is success"));
+
         LOG.info("activate account for userId: {}", id);
-        client.put().uri("/public/accounts/activate/" + authenticationId)
-                .exchange().expectStatus().isOk();
+        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("account activated");
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("PUT");
+
+        LOG.info("assert the path for authenticate was created using path '/create'");
+        assertThat(request.getPath()).startsWith("/authentications/activate/");
     }
 
     @Test

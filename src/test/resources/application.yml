@@ -29,6 +29,7 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
+activate-authentication-rest-service: http://localhost:{port}/authentications/activate/
 email-rest-service: https://email-rest-service.sonam.cloud/email
 emailFrom: ""
 account-activate-link: https://account-rest-service.sonam.cloud/accounts/activate
