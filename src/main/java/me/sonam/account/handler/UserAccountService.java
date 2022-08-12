@@ -153,6 +153,12 @@ public class UserAccountService implements UserAccount {
                 .flatMap(objects -> email(objects.getT1().getEmail(), "Your requested information", objects.getT2().toString()));
     }
 
+    /**
+     * Check account does not exist with authId or email already
+     * Create account in false active state
+     * @param serverRequest
+     * @return
+     */
     @Override
     public Mono<String> createAccount(ServerRequest serverRequest) {
         String authenticationId = serverRequest.pathVariable("authenticationId");
@@ -160,12 +166,8 @@ public class UserAccountService implements UserAccount {
 
         LOG.info("create account with authenticationId: {} and email: {}", authenticationId, email);
 
-        return accountRepository.existsByAuthenticationId(authenticationId).filter(aBoolean -> !aBoolean)
-                .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId")))
-                .flatMap(aBoolean -> accountRepository.existsByEmailAndActiveTrue(email))
-                .filter(aBoolean -> !aBoolean)
-                .switchIfEmpty(Mono.error(new AccountException("Account has an email match" +
-                                " and the account is in Active state")))
+        return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId or email")))
                 .flatMap(aBoolean -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
                 .flatMap(account -> accountRepository.save(account))
                 .flatMap(account -> Mono.just("saved account with In-Active state"))
@@ -189,20 +191,6 @@ public class UserAccountService implements UserAccount {
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()))
                 .thenReturn("Account created");
-    }
-
-    @Override
-    public Mono<String> deleteAccount(ServerRequest serverRequest) {
-        String authenticationId = serverRequest.pathVariable("authenticationId");
-        String email = serverRequest.pathVariable("email");
-        LOG.info("delete account");
-
-        return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
-                .filter(aBoolean -> !aBoolean)
-                .switchIfEmpty(Mono.error(new AccountException("Account is active, failed to delete")))
-                .flatMap(aBoolean -> accountRepository.deleteByAuthenticationId(authenticationId).thenReturn("delete authentication"))
-                .thenReturn("account deleted");
-
     }
 
     @Override

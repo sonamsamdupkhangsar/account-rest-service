@@ -17,8 +17,6 @@ public interface UserAccount {
     Mono<String> emailMySecret(ServerRequest serverRequest);
     // internal service
     Mono<String> createAccount(ServerRequest serverRequest);
-    //internal service
-    Mono<String> deleteAccount(ServerRequest serverRequest);
     Mono<String> sendAuthenticationId(ServerRequest serverRequest);
     Mono<String> validateEmailLoginSecret(ServerRequest serverRequest);
 }

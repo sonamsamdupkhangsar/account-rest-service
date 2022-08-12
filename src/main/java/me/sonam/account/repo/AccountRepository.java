@@ -13,13 +13,10 @@ import java.util.UUID;
 
 public interface AccountRepository extends ReactiveCrudRepository<Account, UUID> {
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String var1);
-    Mono<Boolean> existsByAuthenticationIdAndActiveFalse(String var1);
-    Mono<Boolean> existsByEmailAndActiveTrue(String email);
     Mono<Account> findByAuthenticationId(String authenticationId);
     Mono<Integer> countByAuthenticationId(String authenticationId);
     Mono<Account> findByEmail(String email);
-    Mono<Void> deleteByAuthenticationId(String authenticationId);
-    Mono<Boolean> existsByAuthenticationId(String authenticationId);
+    Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
     @Modifying
     @Query("Update Account a set a.active=true and a.access_date_time= :localDateTime where a.user_id= :userId")
     Mono<Integer> activeAccount(@Param("userId") UUID userId, @Param("localDateTime") LocalDateTime localDateTime);
