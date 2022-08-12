@@ -66,9 +66,22 @@ public class UserAccountService implements UserAccount {
     @Override
     public Mono<String> activateAccount(ServerRequest serverRequest) {
         String authenticationId = serverRequest.pathVariable("authenticationId");
+        String secret = serverRequest.pathVariable("secret");
         LOG.info("activate account for authenticationId: {}", authenticationId);
 
-        return accountRepository.findByAuthenticationId(authenticationId)
+        return passwordSecretRepository.findById(authenticationId).flatMap(passwordSecret -> {
+                    if (!passwordSecret.getSecret().equals(secret)) {
+                        LOG.error("secret does not match from database: {} vs passed: {}", passwordSecret.getSecret(), secret);
+                        return Mono.error(new AccountException("secret does not match"));
+                    }
+                    else if (passwordSecret.getExpireDate().isBefore(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())) {
+                        LOG.error("secret has expired");
+                        return Mono.error(new AccountException("secret has expired"));
+                    }
+                    else {
+                        return  accountRepository.findByAuthenticationId(authenticationId);
+                    }
+                })
                 .switchIfEmpty(Mono.error(new AccountException("No account with authenticationId")))
                 .doOnNext(account -> {
                     if (!account.getActive()){
@@ -78,7 +91,7 @@ public class UserAccountService implements UserAccount {
                         LOG.info("set account to active if not");
                     }
                     else {
-                        LOG.info("account has been set active");
+                        LOG.info("account was active from before");
                     }
                 })
                 .doOnNext(account -> {

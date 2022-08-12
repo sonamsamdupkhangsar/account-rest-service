@@ -116,14 +116,17 @@ public class AccountRestServiceTest {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
 
-        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", true, LocalDateTime.now());
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in active state"));
+
+        PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
+        passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("activate response from authentication-rest-service endpoint is success"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId)
+        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -136,12 +139,54 @@ public class AccountRestServiceTest {
     }
 
     @Test
+    public void activateAccountExpiredPassword() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "activateAccounttest";
+
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        accountRepository.save(account)
+                .subscribe(account1 -> LOG.info("Saved account in active state"));
+
+        PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret",
+                ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
+        passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
+
+        LOG.info("activate account for userId: {}", id);
+        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("secret has expired");
+    }
+
+    @Test
+    public void activateAccountBasSecret() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "activateAccounttest";
+
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        accountRepository.save(account)
+                .subscribe(account1 -> LOG.info("Saved account in active state"));
+
+        PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret",
+                ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
+        passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
+
+        LOG.info("activate account for userId: {}", id);
+        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId+"/myecret")
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("secret does not match");
+    }
+
+    @Test
     public void activateAccountWhenNoAccountExists() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result  = client.put().uri("/public/accounts/activate/" + authenticationId)
+        EntityExchangeResult<String> result  = client.put().uri("/public/accounts/activate/" + authenticationId+"/secret")
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         assertThat(result.getResponseBody()).isEqualTo("No account with authenticationId");
