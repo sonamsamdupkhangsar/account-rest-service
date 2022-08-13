@@ -118,7 +118,7 @@ public class AccountRestServiceTest {
 
         Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
         accountRepository.save(account)
-                .subscribe(account1 -> LOG.info("Saved account in active state"));
+                .subscribe(account1 -> LOG.info("Saved account in false active state"));
 
         PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));

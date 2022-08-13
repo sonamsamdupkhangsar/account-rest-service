@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface AccountRepository extends ReactiveCrudRepository<Account, UUID> {
+    Mono<Boolean> existsByAuthenticationId(String var1);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String var1);
     Mono<Account> findByAuthenticationId(String authenticationId);
     Mono<Integer> countByAuthenticationId(String authenticationId);

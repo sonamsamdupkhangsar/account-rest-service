@@ -69,19 +69,24 @@ public class UserAccountService implements UserAccount {
         String secret = serverRequest.pathVariable("secret");
         LOG.info("activate account for authenticationId: {}", authenticationId);
 
-        return passwordSecretRepository.findById(authenticationId).flatMap(passwordSecret -> {
+        return accountRepository.existsByAuthenticationId(authenticationId)
+                .filter(aBoolean -> aBoolean)
+                .switchIfEmpty(Mono.error(new AccountException("No account with authenticationId")))
+                .flatMap(aBoolean -> passwordSecretRepository.findById(authenticationId))
+                .switchIfEmpty(Mono.error(new AccountException("account has already been activated or try reactivation with email")))
+                .flatMap(passwordSecret -> {
                     if (!passwordSecret.getSecret().equals(secret)) {
                         LOG.error("secret does not match from database: {} vs passed: {}", passwordSecret.getSecret(), secret);
-                        return Mono.error(new AccountException("secret does not match"));
+                         return Mono.error(new AccountException("secret does not match"));
                     }
                     else if (passwordSecret.getExpireDate().isBefore(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())) {
                         LOG.error("secret has expired");
-                        return Mono.error(new AccountException("secret has expired"));
+                         return Mono.error(new AccountException("secret has expired"));
                     }
                     else {
                         LOG.info("delete passwordSecret after validation");
-                        return passwordSecretRepository.deleteById(authenticationId).
-                                flatMap(unused ->  accountRepository.findByAuthenticationId(authenticationId));
+                        return passwordSecretRepository.deleteById(authenticationId)
+                                .then(accountRepository.findByAuthenticationId(authenticationId));
                     }
                 })
                 .switchIfEmpty(Mono.error(new AccountException("No account with authenticationId")))
