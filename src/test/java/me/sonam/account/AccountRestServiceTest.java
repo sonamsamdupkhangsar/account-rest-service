@@ -160,7 +160,7 @@ public class AccountRestServiceTest {
     }
 
     @Test
-    public void activateAccountBasSecret() throws InterruptedException {
+    public void activateAccountBadSecret() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
 

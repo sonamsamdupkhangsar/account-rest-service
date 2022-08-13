@@ -103,9 +103,9 @@ public class UserAccountService implements UserAccount {
                     LOG.info("send activate webrequest to authentication-rest-service: {}", stringBuilder.toString());
                     WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
 
-                    return spec.bodyToMono(String.class).flatMap(myemail-> {
-                        LOG.info("activation response from authentication-rest-service is: {}", myemail);
-                        return Mono.just("activate response from authentication-rest-service endpoint is success");
+                    return spec.bodyToMono(String.class).flatMap(s -> {
+                        LOG.info("activation response from authentication-rest-service is: {}", s);
+                        return Mono.just(s);
                     }).onErrorResume(throwable -> Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage())));
                 })
                 .thenReturn("account activated");
