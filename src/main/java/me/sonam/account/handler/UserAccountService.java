@@ -79,7 +79,9 @@ public class UserAccountService implements UserAccount {
                         return Mono.error(new AccountException("secret has expired"));
                     }
                     else {
-                        return  accountRepository.findByAuthenticationId(authenticationId);
+                        LOG.info("delete passwordSecret after validation");
+                        return passwordSecretRepository.deleteById(authenticationId).
+                                flatMap(unused ->  accountRepository.findByAuthenticationId(authenticationId));
                     }
                 })
                 .switchIfEmpty(Mono.error(new AccountException("No account with authenticationId")))
