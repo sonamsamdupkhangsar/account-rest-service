@@ -126,7 +126,7 @@ public class AccountRestServiceTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("activate response from authentication-rest-service endpoint is success"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
+        EntityExchangeResult<String> result = client.get().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -152,7 +152,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
+        EntityExchangeResult<String> result = client.get().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -173,7 +173,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result = client.put().uri("/public/accounts/activate/" + authenticationId+"/myecret")
+        EntityExchangeResult<String> result = client.get().uri("/public/accounts/activate/" + authenticationId+"/myecret")
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -186,7 +186,7 @@ public class AccountRestServiceTest {
         final String authenticationId = "activateAccounttest";
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<String> result  = client.put().uri("/public/accounts/activate/" + authenticationId+"/secret")
+        EntityExchangeResult<String> result  = client.get().uri("/public/accounts/activate/" + authenticationId+"/secret")
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         assertThat(result.getResponseBody()).isEqualTo("No account with authenticationId");
