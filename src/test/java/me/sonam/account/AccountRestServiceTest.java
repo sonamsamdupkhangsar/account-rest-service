@@ -136,6 +136,15 @@ public class AccountRestServiceTest {
 
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/authentications/activate/");
+
+
+        accountRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
+                assertNext(account1 -> {
+                    LOG.info("assert active is now true");
+                    assertThat(account1.getActive()).isTrue();
+                })
+                .verifyComplete();
+
     }
 
     @Test

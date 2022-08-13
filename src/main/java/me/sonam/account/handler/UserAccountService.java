@@ -101,9 +101,9 @@ public class UserAccountService implements UserAccount {
                         LOG.info("account was active from before");
                     }
                 })
-                .doOnNext(account -> {
+                .flatMap(account -> {
                     LOG.info("saving account: {}", account.toString());
-                    accountRepository.save(account);
+                    return accountRepository.save(account);
                 })
                 .flatMap(account -> {
                     StringBuilder stringBuilder = new StringBuilder(activateAuthentication).append(authenticationId);
