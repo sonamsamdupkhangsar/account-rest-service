@@ -228,7 +228,7 @@ public class UserAccountService implements UserAccount {
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
-               // .thenReturn("Account created");
+
     }
 
     @Override

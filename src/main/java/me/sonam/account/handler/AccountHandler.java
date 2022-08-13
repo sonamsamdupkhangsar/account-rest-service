@@ -31,7 +31,7 @@ public class AccountHandler implements Handler {
         return userAccount.isAccountActive(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
         .onErrorResume(e -> {
-            LOG.error("error occured: {}", e);
+            LOG.error("is account active check failed", e);
             return ServerResponse.badRequest().body(BodyInserters
                     .fromValue(e.getMessage()));
         });
@@ -43,7 +43,7 @@ public class AccountHandler implements Handler {
         return userAccount.activateAccount(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> {
-                    LOG.error("error occured: {}", e);
+                    LOG.error("activate account failed", e);
                     return ServerResponse.badRequest().body(BodyInserters
                         .fromValue(e.getMessage()));
                 });
@@ -55,7 +55,7 @@ public class AccountHandler implements Handler {
         return userAccount.emailActivationLink(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> {
-                    LOG.error("error occured: {}", e);
+                    LOG.error("email activation link failed", e);
                     return ServerResponse.badRequest().body(BodyInserters
                             .fromValue(e.getMessage()));
                 });
@@ -67,7 +67,7 @@ public class AccountHandler implements Handler {
         return userAccount.createAccount(serverRequest).flatMap(s ->
                 ServerResponse.created(URI.create("/accounts/")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> {
-                    LOG.error("error occured: {}", e);
+                    LOG.error("create account failed", e);
                     return ServerResponse.badRequest().body(BodyInserters
                             .fromValue(e.getMessage()));
                 });
@@ -79,7 +79,7 @@ public class AccountHandler implements Handler {
         return userAccount.emailMySecret(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> {
-                    LOG.error("error occured: {}", e);
+                    LOG.error("emailMySecred failed", e);
                     return ServerResponse.badRequest().body(BodyInserters
                             .fromValue(e.getMessage()));
                 });
