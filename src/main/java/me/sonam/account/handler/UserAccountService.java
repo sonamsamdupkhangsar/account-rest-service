@@ -99,8 +99,8 @@ public class UserAccountService implements UserAccount {
                     accountRepository.save(account);
                 })
                 .flatMap(account -> {
-                    LOG.info("send activate webrequest to authentication-rest-service");
                     StringBuilder stringBuilder = new StringBuilder(activateAuthentication).append(authenticationId);
+                    LOG.info("send activate webrequest to authentication-rest-service: {}", stringBuilder.toString());
                     WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
 
                     return spec.bodyToMono(String.class).flatMap(myemail-> {
