@@ -106,7 +106,11 @@ public class UserAccountService implements UserAccount {
                     return spec.bodyToMono(String.class).flatMap(s -> {
                         LOG.info("activation response from authentication-rest-service is: {}", s);
                         return Mono.just(s);
-                    }).onErrorResume(throwable -> Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage())));
+                    }).onErrorResume(throwable -> {
+                        LOG.error("error on authentication rest service call", throwable);
+                       return Mono.error(new AccountException("Email activation failed: " + throwable.getMessage()));
+
+                    });
                 })
                 .thenReturn("account activated");
     }
