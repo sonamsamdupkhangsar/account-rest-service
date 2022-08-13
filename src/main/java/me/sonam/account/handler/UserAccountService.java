@@ -107,7 +107,7 @@ public class UserAccountService implements UserAccount {
                         LOG.info("activation response from authentication-rest-service is: {}", s);
                         return Mono.just(s);
                     }).onErrorResume(throwable -> {
-                        LOG.error("error on authentication rest service call", throwable);
+                        LOG.error("error on authentication rest service call {}", throwable);
                        return Mono.error(new AccountException("Email activation failed: " + throwable.getMessage()));
 
                     });
