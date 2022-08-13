@@ -50,7 +50,7 @@ public class Router {
         LOG.info("building router function");
         return RouterFunctions.route(GET("/public/accounts/active/{authenticationId}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::isAccountActive)
-                .andRoute(PUT("/public/accounts/activate/{authenticationId}/{secret}")
+                .andRoute(GET("/public/accounts/activate/{authenticationId}/{secret}")
                 .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount)
                 .andRoute(PUT("/public/accounts/emailactivationlink/{authenticationId}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLink)
