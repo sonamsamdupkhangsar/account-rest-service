@@ -140,7 +140,7 @@ public class UserAccountService implements UserAccount {
                     LOG.info("passwordSecret created");
                     return passwordSecretRepository.save(passwordSecret);
                 })
-                .map(passwordSecret -> new StringBuilder(emailBody)
+                .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
                         .append(accountActivateLink).append("/").append(authId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
