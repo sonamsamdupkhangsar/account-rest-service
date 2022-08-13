@@ -128,7 +128,7 @@ public class UserAccountService implements UserAccount {
                 .switchIfEmpty(Mono.error(new AccountException("Account already exists and is active")))
                 .doOnNext(aBoolean -> {
                     LOG.info("delete from passwordSecret repo if there is any: {}", authId);
-                    passwordSecretRepository.deleteById(authId);
+                    passwordSecretRepository.deleteById(authId).subscribe(unused -> LOG.info("delete existing password secret"));
                 })
                 .flatMap(unused -> {
                     LOG.info("generate random text: {}", unused);
