@@ -349,7 +349,7 @@ public class AccountRestServiceTest {
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
-        assertThat(result.getResponseBody()).isEqualTo("Account created");
+        assertThat(result.getResponseBody()).isEqualTo("email sent");
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");

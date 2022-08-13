@@ -227,8 +227,8 @@ public class UserAccountService implements UserAccount {
                         .append(accountActivateLink).append("/").append(authenticationId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
-                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()))
-                .thenReturn("Account created");
+                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
+               // .thenReturn("Account created");
     }
 
     @Override
@@ -280,7 +280,10 @@ public class UserAccountService implements UserAccount {
         return spec.bodyToMono(String.class).flatMap(myemail-> {
             LOG.info("activation email response is: {}", myemail);
             return Mono.just("email sent");
-        }).onErrorResume(throwable -> Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage())));
+        }).onErrorResume(throwable -> {
+            LOG.error("email failed", throwable);
+          return  Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage()));
+        });
     }
 
     /**
