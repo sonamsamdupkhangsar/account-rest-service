@@ -228,7 +228,11 @@ public class UserAccountService implements UserAccount {
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
-
+               /* .onErrorResume(throwable -> {
+                    LOG.info("rollback account created on failure");
+                    accountRepository.(authenticationId).subscribe();
+                })
+*/
     }
 
     @Override
@@ -282,7 +286,7 @@ public class UserAccountService implements UserAccount {
             return Mono.just("email sent");
         }).onErrorResume(throwable -> {
             LOG.error("email failed", throwable);
-          return  Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage()));
+          return  Mono.error(new AccountException("Email failed: "+ throwable.getMessage()));
         });
     }
 
