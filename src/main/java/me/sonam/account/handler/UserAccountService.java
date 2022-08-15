@@ -227,13 +227,12 @@ public class UserAccountService implements UserAccount {
                 .flatMap(aBoolean -> accountRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
                 .flatMap(integer -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
                 .flatMap(account -> accountRepository.save(account))
-                .flatMap(account -> Mono.just("saved account with In-Active state"))
-                .doOnNext(s -> {
+                .flatMap(account -> {
                     LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
-                    passwordSecretRepository.deleteById(authenticationId);
+                    return passwordSecretRepository.deleteById(authenticationId).thenReturn("deleted");
                 })
-                .flatMap(unused -> {
-                    LOG.info("generate random text: {}", unused);
+                .flatMap(s -> {
+                    LOG.info("generate random text: {}", s);
                     return generateRandomText(10);
                 })
                 .flatMap(randomText -> Mono.just(new PasswordSecret(authenticationId, randomText,
