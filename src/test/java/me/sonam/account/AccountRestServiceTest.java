@@ -61,6 +61,7 @@ public class AccountRestServiceTest {
 
     private static String emailEndpoint = "http://localhost:{port}/email";
     private static String activateAuthenticationEndpoint = "http://localhost:{port}/authentications/activate/";
+    private static String activateUserEndpoint = "http://localhost:{port}/user/activate/";
 
     @Before
     public void setUp() {
@@ -93,6 +94,7 @@ public class AccountRestServiceTest {
     static void properties(DynamicPropertyRegistry r) throws IOException {
         r.add("email-rest-service", () -> emailEndpoint.replace("{port}", mockWebServer.getPort() + ""));
         r.add("activate-authentication-rest-service", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
+        r.add("activate-user-rest-service", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
         LOG.info("updated email-rest-service properties: {}" );
         LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
     }
@@ -124,6 +126,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("activate response from authentication-rest-service endpoint is success"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("activate response from user-rest-service endpoint is success"));
 
         LOG.info("activate account for userId: {}", id);
         EntityExchangeResult<String> result = client.get().uri("/public/accounts/activate/" + authenticationId+"/mysecret")
@@ -133,6 +136,7 @@ public class AccountRestServiceTest {
         assertThat(result.getResponseBody()).isEqualTo("account activated");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("PUT");
+        mockWebServer.takeRequest();
 
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/authentications/activate/");

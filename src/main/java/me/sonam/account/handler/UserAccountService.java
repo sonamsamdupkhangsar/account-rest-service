@@ -25,6 +25,9 @@ public class UserAccountService implements UserAccount {
 
     private WebClient webClient;
 
+    @Value("${activate-user-rest-service}")
+    private String activateUser;
+
     @Value("${activate-authentication-rest-service}")
     private String activateAuthentication;
 
@@ -115,7 +118,21 @@ public class UserAccountService implements UserAccount {
                         return Mono.just(s);
                     }).onErrorResume(throwable -> {
                         LOG.error("error on authentication rest service call {}", throwable);
-                       return Mono.error(new AccountException("Email activation failed: " + throwable.getMessage()));
+                       return Mono.error(new AccountException("Authentication activation call failed: " + throwable.getMessage()));
+
+                    });
+                })
+                .flatMap(account -> {
+                    StringBuilder stringBuilder = new StringBuilder(activateUser).append(authenticationId);
+                    LOG.info("send activate webrequest to user-rest-service: {}", stringBuilder.toString());
+                    WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
+
+                    return spec.bodyToMono(String.class).flatMap(s -> {
+                        LOG.info("activation response from user-rest-service is: {}", s);
+                        return Mono.just(s);
+                    }).onErrorResume(throwable -> {
+                        LOG.error("error on user rest service call {}", throwable);
+                        return Mono.error(new AccountException("user activation failed: " + throwable.getMessage()));
 
                     });
                 })

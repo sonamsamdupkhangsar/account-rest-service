@@ -25,6 +25,7 @@ spring:
     properties:
       sslMode: REQUIRE
 
+activate-user-rest-service: http://user-rest-service-mychart.backend.svc.cluster.local:80/user/activate/
 activate-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications/activate/
 email-rest-service: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
 emailFrom: "kecha@sonam.email"
