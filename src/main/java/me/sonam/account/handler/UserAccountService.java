@@ -247,6 +247,7 @@ public class UserAccountService implements UserAccount {
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
 
+
      /*   return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId or email")))
                 .flatMap(aBoolean -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
