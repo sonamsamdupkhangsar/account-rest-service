@@ -30,8 +30,11 @@ public class AccountHandler implements Handler {
 
         return userAccount.isAccountActive(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-        .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                .fromValue(e.getMessage())));
+        .onErrorResume(e -> {
+            LOG.error("is account active check failed", e);
+            return ServerResponse.badRequest().body(BodyInserters
+                    .fromValue(e.getMessage()));
+        });
     }
 
     @Override
@@ -39,8 +42,11 @@ public class AccountHandler implements Handler {
         LOG.info("activate account");
         return userAccount.activateAccount(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+                .onErrorResume(e -> {
+                    LOG.error("activate account failed", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                        .fromValue(e.getMessage()));
+                });
     }
 
     @Override
@@ -48,8 +54,11 @@ public class AccountHandler implements Handler {
         LOG.info("email activation link handler");
         return userAccount.emailActivationLink(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+                .onErrorResume(e -> {
+                    LOG.error("email activation link failed", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                            .fromValue(e.getMessage()));
+                });
     }
 
     @Override
@@ -57,8 +66,11 @@ public class AccountHandler implements Handler {
         LOG.info("create initial account");
         return userAccount.createAccount(serverRequest).flatMap(s ->
                 ServerResponse.created(URI.create("/accounts/")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+                .onErrorResume(e -> {
+                    LOG.error("create account failed", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                            .fromValue(e.getMessage()));
+                });
     }
 
     @Override
@@ -66,8 +78,11 @@ public class AccountHandler implements Handler {
         LOG.info("email my secret");
         return userAccount.emailMySecret(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+                .onErrorResume(e -> {
+                    LOG.error("emailMySecred failed", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                            .fromValue(e.getMessage()));
+                });
     }
 
     @Override
@@ -75,8 +90,11 @@ public class AccountHandler implements Handler {
         LOG.info("send login id");
         return userAccount.sendAuthenticationId(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+                .onErrorResume(e -> {
+                    LOG.error("error occured: {}", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                            .fromValue(e.getMessage()));
+                });
     }
 
     @Override
@@ -84,7 +102,10 @@ public class AccountHandler implements Handler {
         LOG.info("validate login secret");
         return userAccount.validateEmailLoginSecret(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+                .onErrorResume(e -> {
+                    LOG.error("error occured: {}", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                            .fromValue(e.getMessage()));
+                });
     }
 }

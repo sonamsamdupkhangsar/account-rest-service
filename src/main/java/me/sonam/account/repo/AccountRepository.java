@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface AccountRepository extends ReactiveCrudRepository<Account, UUID> {
+    //@Query("delete from Account where authentiation_id= :authentication_Id and active=true")
+    Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
     Mono<Boolean> existsByAuthenticationId(String var1);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String var1);
     Mono<Account> findByAuthenticationId(String authenticationId);

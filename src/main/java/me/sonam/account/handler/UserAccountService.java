@@ -25,6 +25,9 @@ public class UserAccountService implements UserAccount {
 
     private WebClient webClient;
 
+    @Value("${activate-user-rest-service}")
+    private String activateUser;
+
     @Value("${activate-authentication-rest-service}")
     private String activateAuthentication;
 
@@ -115,7 +118,21 @@ public class UserAccountService implements UserAccount {
                         return Mono.just(s);
                     }).onErrorResume(throwable -> {
                         LOG.error("error on authentication rest service call {}", throwable);
-                       return Mono.error(new AccountException("Email activation failed: " + throwable.getMessage()));
+                       return Mono.error(new AccountException("Authentication activation call failed: " + throwable.getMessage()));
+
+                    });
+                })
+                .flatMap(account -> {
+                    StringBuilder stringBuilder = new StringBuilder(activateUser).append(authenticationId);
+                    LOG.info("send activate webrequest to user-rest-service: {}", stringBuilder.toString());
+                    WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
+
+                    return spec.bodyToMono(String.class).flatMap(s -> {
+                        LOG.info("activation response from user-rest-service is: {}", s);
+                        return Mono.just(s);
+                    }).onErrorResume(throwable -> {
+                        LOG.error("error on user rest service call {}", throwable);
+                        return Mono.error(new AccountException("user activation failed: " + throwable.getMessage()));
 
                     });
                 })
@@ -204,7 +221,34 @@ public class UserAccountService implements UserAccount {
 
         LOG.info("create account with authenticationId: {} and email: {}", authenticationId, email);
 
-        return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
+        return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId).filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new AccountException("Account is already active with authenticationId")))
+                //delete any previous attempts that is not activated
+                .flatMap(aBoolean -> accountRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
+                .flatMap(integer -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
+                .flatMap(account -> accountRepository.save(account))
+                .flatMap(account -> {
+                    LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
+                    return passwordSecretRepository.deleteById(authenticationId).thenReturn("deleted");
+                })
+                .flatMap(s -> {
+                    LOG.info("generate random text: {}", s);
+                    return generateRandomText(10);
+                })
+                .flatMap(randomText -> Mono.just(new PasswordSecret(authenticationId, randomText,
+                        ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(secretExpiresInHour))))
+                .flatMap(passwordSecret -> {
+                    LOG.info("passwordSecret created");
+                    return passwordSecretRepository.save(passwordSecret);
+                })
+                .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
+                        .append(accountActivateLink).append("/").append(authenticationId)
+                        .append("/").append(passwordSecret.getSecret())
+                        .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
+                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
+
+
+     /*   return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId or email")))
                 .flatMap(aBoolean -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
                 .flatMap(account -> accountRepository.save(account))
@@ -227,8 +271,12 @@ public class UserAccountService implements UserAccount {
                         .append(accountActivateLink).append("/").append(authenticationId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
-                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()))
-                .thenReturn("Account created");
+                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));*/
+               /* .onErrorResume(throwable -> {
+                    LOG.info("rollback account created on failure");
+                    accountRepository.(authenticationId).subscribe();
+                })
+*/
     }
 
     @Override
@@ -278,9 +326,12 @@ public class UserAccountService implements UserAccount {
         WebClient.ResponseSpec spec = webClient.post().uri(emailEp).bodyValue(email).retrieve();
 
         return spec.bodyToMono(String.class).flatMap(myemail-> {
-            LOG.info("activation email response is: {}", myemail);
+            LOG.info("email response is: {}", myemail);
             return Mono.just("email sent");
-        }).onErrorResume(throwable -> Mono.error(new AccountException("Email activation failed: "+ throwable.getMessage())));
+        }).onErrorResume(throwable -> {
+            LOG.error("email failed", throwable);
+          return  Mono.error(new AccountException("Email failed: "+ throwable.getMessage()));
+        });
     }
 
     /**
