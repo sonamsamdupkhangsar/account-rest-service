@@ -366,24 +366,18 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingAuthIdAndEmail() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccount@sonam.co";
-        Account account = new Account(authId, emailTo, false, LocalDateTime.now());
 
+        Account account = new Account(authId, emailTo, false, LocalDateTime.now());
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+
         LOG.info("try to POST with the same email/authId");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
-                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("POST");
-
-        LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/email");
 
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("email sent");
-        //assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId or email");
+        assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
     }
 
     @Test
@@ -405,7 +399,6 @@ public class AccountRestServiceTest {
         LOG.info("response: {}", result.getResponseBody());
 
         assertThat(result.getResponseBody()).isEqualTo("email sent");
-        //assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId or email");
     }
 
     @Test
@@ -415,20 +408,17 @@ public class AccountRestServiceTest {
         Account account = new Account(authId, emailTo, true, LocalDateTime.now());
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
 
         LOG.info("try to POST with the same email/authId");
         String anotherId = UUID.randomUUID().toString();
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/" + anotherId + "/" + emailTo)
-                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("POST");
 
         LOG.info("response: {}", result.getResponseBody());
         //assertThat(result.getResponseBody()).isEqualTo("Account already exists with authenticationId or email");
-        assertThat(result.getResponseBody()).isEqualTo("email sent");
+        assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
     }
 
     @Test
