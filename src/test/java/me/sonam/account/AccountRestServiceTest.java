@@ -381,7 +381,7 @@ public class AccountRestServiceTest {
     }
 
     @Test
-    public void createAccountWithExistingAuthId() throws InterruptedException {
+    public void createAccountWithExistingAuthIdActiveFalse() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccount@sonam.co";
         Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", false, LocalDateTime.now());
@@ -401,8 +401,103 @@ public class AccountRestServiceTest {
         assertThat(result.getResponseBody()).isEqualTo("email sent");
     }
 
+
     @Test
-    public void createAccountWithExistingEmail() throws InterruptedException {
+    public void createAccountWithExistingAuthIdActiveTrue() throws InterruptedException {
+        String authId = "createAccountWithExistingAuthId";
+        String emailTo = "createAccount@sonam.co";
+        Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", true, LocalDateTime.now());
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+        LOG.info("try to POST with the same email/authId");
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("Account is already active with authenticationId");
+    }
+
+    @Test
+    public void createAccountWithNewAuthIdWithExistingEmail() throws InterruptedException {
+        String authId = "createAccountWithExistingAuthId";
+        String emailTo = "createAccount@sonam.co";
+        Account account = new Account(authId, emailTo, true, LocalDateTime.now());
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+        LOG.info("try to POST with the same email/authId");
+        final String newAuthId = "createAccountWithNewAuthIdWithExistingEmail";
+
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/" + newAuthId + "/" + emailTo)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
+    }
+
+    /**
+     * this test will verify that if an account exists with authId and active is false and another user
+     * signed up with same authenticationId but new email then the previous authenticationId record
+     * will be deleted and insert a new row.
+     * @throws InterruptedException
+     */
+    @Test
+    public void createAccountWithExistingAuthIdButNewEmailAndActiveFalse() throws InterruptedException {
+        String authId = "createAccountWithExistingAuthId";
+        String email = "createAccount@sonam.co";
+
+        Account account = new Account(authId, email, false, LocalDateTime.now());
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+        final String newEmail = "createAccountWithExistingAuthIdButNewEmailAndActiveFalse@sonam.co";
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/"+authId+"/"+newEmail)
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+
+        LOG.info("assert the path for authenticate was created using path '/create'");
+        assertThat(request.getPath()).startsWith("/email");
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
+        assertThat(result.getResponseBody()).isEqualTo("email sent");
+
+        StepVerifier.create(accountRepository.findByAuthenticationId(authId)).assertNext(account1 ->
+        {
+            LOG.info("assert account1");
+           assertThat(account1.getActive()).isFalse();
+           assertThat(account1.getEmail()).isEqualTo(newEmail);
+        });
+    }
+
+    @Test
+    public void createAccountWithExistingAuthIdButNewEmailAndActiveTrue() throws InterruptedException {
+        String authId = "createAccountWithExistingAuthId";
+        String email = "createAccount@sonam.co";
+
+        Account account = new Account(authId, email, true, LocalDateTime.now());
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+        final String newEmail = "createAccountWithExistingAuthIdButNewEmailAndActiveFalse@sonam.co";
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/accounts/"+authId+"/"+newEmail)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        assertThat(result.getResponseBody()).isEqualTo("Account is already active with authenticationId");
+    }
+
+
+    @Test
+    public void createAccountWithExistingEmailAndActiveTrue() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccountWithExistingEmailAndActive@sonam.email";
         Account account = new Account(authId, emailTo, true, LocalDateTime.now());
