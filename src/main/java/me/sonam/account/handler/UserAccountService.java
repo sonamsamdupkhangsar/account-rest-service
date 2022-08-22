@@ -223,6 +223,9 @@ public class UserAccountService implements UserAccount {
 
         return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId).filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("Account is already active with authenticationId")))
+                .flatMap(aBoolean -> accountRepository.existsByEmail(email))
+                .filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new AccountException("a user with this email already exists")))
                 //delete any previous attempts that is not activated
                 .flatMap(aBoolean -> accountRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
                 .flatMap(integer -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))

@@ -15,6 +15,7 @@ public interface AccountRepository extends ReactiveCrudRepository<Account, UUID>
     //@Query("delete from Account where authentiation_id= :authentication_Id and active=true")
     Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
     Mono<Boolean> existsByAuthenticationId(String var1);
+    Mono<Boolean> existsByEmail(String email);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String var1);
     Mono<Account> findByAuthenticationId(String authenticationId);
     Mono<Integer> countByAuthenticationId(String authenticationId);
