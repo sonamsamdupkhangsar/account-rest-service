@@ -61,6 +61,8 @@ public class Router {
                 .andRoute(PUT("/public/accounts/email/authenticationId/{email}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::sendLoginId)
                 .andRoute(PUT("/public/accounts/validate/secret/{authenticationId}/{secret}")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret);
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret)
+                .andRoute(DELETE("/accounts/email/{email}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::delete);
     }
 }

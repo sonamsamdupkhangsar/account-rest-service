@@ -91,7 +91,7 @@ public class AccountHandler implements Handler {
         return userAccount.sendAuthenticationId(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> {
-                    LOG.error("error occured: {}", e);
+                    LOG.error("sengLoginId failed", e);
                     return ServerResponse.badRequest().body(BodyInserters
                             .fromValue(e.getMessage()));
                 });
@@ -103,7 +103,20 @@ public class AccountHandler implements Handler {
         return userAccount.validateEmailLoginSecret(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(e -> {
-                    LOG.error("error occured: {}", e);
+                    LOG.error("validateEmailLoginSecret failed", e);
+                    return ServerResponse.badRequest().body(BodyInserters
+                            .fromValue(e.getMessage()));
+                });
+    }
+
+    @Override
+    public Mono<ServerResponse> delete(ServerRequest serverRequest) {
+        LOG.info("delete account using if password secret has expired and account is false");
+
+        return userAccount.delete(serverRequest).flatMap(s ->
+                ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(e -> {
+                    LOG.error("deleted failed", e);
                     return ServerResponse.badRequest().body(BodyInserters
                             .fromValue(e.getMessage()));
                 });

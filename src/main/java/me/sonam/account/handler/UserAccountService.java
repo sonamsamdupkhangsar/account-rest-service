@@ -25,11 +25,20 @@ public class UserAccountService implements UserAccount {
 
     private WebClient webClient;
 
-    @Value("${activate-user-rest-service}")
+    @Value("${user-rest-service.root}${user-rest-service.activate}")
+    //@Value("${activate-user-rest-service}")
     private String activateUser;
 
-    @Value("${activate-authentication-rest-service}")
+    @Value("${user-rest-service.root}${user-rest-service.delete}")
+    //@Value("${activate-user-rest-service}")
+    private String deleteUser;
+
+//    @Value("${activate-authentication-rest-service}")
+    @Value("${authentication-rest-service.root}${authentication-rest-service.activate}")
     private String activateAuthentication;
+
+    @Value("${authentication-rest-service.root}${authentication-rest-service.delete}")
+    private String deleteAuthentication;
 
     @Value("${email-rest-service}")
     private String emailEp;
@@ -320,6 +329,56 @@ public class UserAccountService implements UserAccount {
                         return Mono.error(new AccountException("secret does not match"));
                     }
                 });
+    }
+
+    @Override
+    public Mono<String> delete(ServerRequest serverRequest) {
+        LOG.info("delete accounts where the passwordsecret have expired more than 1 day and that are not active");
+        String email = serverRequest.pathVariable("email");
+
+        return accountRepository.findByEmail(email)
+                .switchIfEmpty(Mono.error(new AccountException("no account with email")))
+                .map(account -> account.getAuthenticationId())
+                .flatMap(authenticationId ->
+                        passwordSecretRepository.findById(authenticationId)
+                        .switchIfEmpty(Mono.error(new AccountException("no passwordSecret with authenticationId")))
+                        .filter(passwordSecret ->
+                                ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().isAfter(passwordSecret.getExpireDate())
+                        ).switchIfEmpty(Mono.error(new AccountException("password has not expired, can't delete")))
+                        .flatMap(passwordSecret -> accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId))
+                        .filter(aBoolean -> !aBoolean)
+                        .switchIfEmpty(Mono.error(new AccountException("account is active, can't delete")))
+                        .flatMap(aBoolean -> {
+                                    LOG.info("send request to delete User record with authenticationId: {}", authenticationId);
+                                    StringBuilder stringBuilder = new StringBuilder(deleteUser).append(authenticationId);
+                                    LOG.info("delete user with endpoint: {}", stringBuilder.toString());
+
+                                    return webClient.delete().uri(stringBuilder.toString()).retrieve().bodyToMono(String.class)
+                                            .doOnNext(s -> {
+                                                LOG.info("deleted user with authenticationId: {}, rest response is {}", authenticationId, s);
+                                            }).onErrorResume(throwable -> {
+                                                LOG.error("error occured deleting user record with authenticationId", throwable);
+                                                return Mono.error(new AccountException("failed to delete user"));
+                                            });
+                                }
+                        ).flatMap(s -> {
+                    LOG.info("delete authentication object");
+                    StringBuilder stringBuilder = new StringBuilder(deleteAuthentication).append(authenticationId);
+                    LOG.info("delete authentication with endpoint: {}", stringBuilder.toString());
+
+                    return webClient.delete().uri(stringBuilder.toString()).retrieve().bodyToMono(String.class)
+                            .doOnNext(s2 -> {
+                                LOG.info("deleted authentication with authenticationId: {}, rest response is {}", authenticationId, s2);
+                            }).onErrorResume(throwable -> {
+                                LOG.error("error occured on deletion request", throwable);
+                                return Mono.error(new AccountException("failed to delete authentication"));
+                            });
+                }).flatMap(s -> {
+                    LOG.info("delete passwordSecret if exists for authenticationId: {}", authenticationId);
+                    return accountRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId)
+                            .then(passwordSecretRepository.deleteById(authenticationId))
+                            .thenReturn("deleted authenticationId that is active false");
+                }));
     }
 
     private Mono<String> email(String emailTo, String subject, String messageBody) {

@@ -60,8 +60,8 @@ public class AccountRestServiceTest {
     private static MockWebServer mockWebServer;
 
     private static String emailEndpoint = "http://localhost:{port}/email";
-    private static String activateAuthenticationEndpoint = "http://localhost:{port}/authentications/activate/";
-    private static String activateUserEndpoint = "http://localhost:{port}/user/activate/";
+    private static String activateAuthenticationEndpoint = "http://localhost:{port}";///authentications/activate/";
+    private static String activateUserEndpoint = "http://localhost:{port}";///user/activate/";
 
     @Before
     public void setUp() {
@@ -93,8 +93,10 @@ public class AccountRestServiceTest {
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) throws IOException {
         r.add("email-rest-service", () -> emailEndpoint.replace("{port}", mockWebServer.getPort() + ""));
-        r.add("activate-authentication-rest-service", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
-        r.add("activate-user-rest-service", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
+        //r.add("activate-authentication-rest-service", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
+        r.add("authentication-rest-service.root", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
+        //r.add("activate-user-rest-service", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
+        r.add("user-rest-service.root", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
         LOG.info("updated email-rest-service properties: {}" );
         LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
     }
@@ -600,5 +602,130 @@ public class AccountRestServiceTest {
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("secret has expired");
     }
+
+    @Test
+    public void deleteWithNonExistingEmail() throws InterruptedException {
+        String email = "deleteWithPasswordSecretAndAccountFalse@sonam.co";
+        String authId = "deleteWithPasswordSecretAndAccountFalse";
+
+        Account account = new Account(authId, email, false, LocalDateTime.now());
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
+
+        passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
+
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/accounts/email/"+"bogusemail@email.com")
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("no account with email");
+
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is false?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is false?: {}", aBoolean));
+    }
+
+    @Test
+    public void deleteWithNoAccount() throws InterruptedException {
+        String email = "deleteWithPasswordSecretAndAccountFalse@sonam.co";
+        String authId = "deleteWithPasswordSecretAndAccountFalse";
+
+        Account account = new Account(authId, email, false, LocalDateTime.now());
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        PasswordSecret passwordSecret = new PasswordSecret("no-corresponding-id", "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
+
+        passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
+
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/accounts/email/"+email)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("no passwordSecret with authenticationId");
+
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is false?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is false?: {}", aBoolean));
+    }
+
+    @Test
+    public void deleteWithPasswordSecretExpiredAndAccountFalse() throws InterruptedException {
+        String email = "deleteWithPasswordSecretAndAccountFalse@sonam.co";
+        String authId = "deleteWithPasswordSecretAndAccountFalse";
+
+        Account account = new Account(authId, email, false, LocalDateTime.now());
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("user deleted"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("authentication deleted"));
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
+
+        passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
+
+
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/accounts/email/"+email)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("deleted authenticationId that is active false");
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).isEqualTo("/user/deleteWithPasswordSecretAndAccountFalse");
+
+        LOG.info("1. path: {}", request.getPath());
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).isEqualTo("/authentications/deleteWithPasswordSecretAndAccountFalse");
+
+        LOG.info("2. path: {}", request.getPath());
+
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is false?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is false?: {}", aBoolean));
+    }
+
+    @Test
+    public void deleteWithPasswordSecretNotExpiredAndAccountFalse() throws InterruptedException {
+        String email = "deleteWithPasswordSecretNotExpiredAndAccountFalse@sonam.co";
+        String authId = "deleteWithPasswordSecretNotExpiredAndAccountFalse";
+
+        Account account = new Account(authId, email, false, LocalDateTime.now());
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
+
+        passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
+
+
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/accounts/email/"+email)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("password has not expired, can't delete");
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+    }
+
+    @Test
+    public void deleteWithPasswordSecretExpiredAndAccountActiveTrue() throws InterruptedException {
+        String email = "deleteWithPasswordSecretExpiredAndAccountActiveTrue@sonam.co";
+        String authId = "deleteWithPasswordSecretExpiredAndAccountActiveTrue";
+
+        Account account = new Account(authId, email, true, LocalDateTime.now());
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
+
+        passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
+
+
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/accounts/email/"+email)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+
+        assertThat(result.getResponseBody()).isEqualTo("account is active, can't delete");
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+    }
+
 }
 

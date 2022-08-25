@@ -19,4 +19,5 @@ public interface UserAccount {
     Mono<String> createAccount(ServerRequest serverRequest);
     Mono<String> sendAuthenticationId(ServerRequest serverRequest);
     Mono<String> validateEmailLoginSecret(ServerRequest serverRequest);
+    Mono<String> delete(ServerRequest serverRequest);
 }

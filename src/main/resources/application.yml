@@ -25,8 +25,19 @@ spring:
     properties:
       sslMode: REQUIRE
 
-activate-user-rest-service: http://user-rest-service-mychart.backend.svc.cluster.local:80/user/activate/
-activate-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications/activate/
+
+user-rest-service:
+    root: http://user-rest-service-mychart.backend.svc.cluster.local:80
+    activate: /user/activate/
+    delete: /user/
+
+authentication-rest-service:
+  root: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+  activate: /authentications/activate/
+  delete: /authentications/
+
+#activate-user-rest-service: http://user-rest-service-mychart.backend.svc.cluster.local:80/user/activate/
+#activate-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications/activate/
 email-rest-service: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
 emailFrom: "kecha@sonam.email"
 account-activate-link: https://account-rest-service.sonam.cloud/public/accounts/activate
