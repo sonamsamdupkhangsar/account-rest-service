@@ -74,6 +74,9 @@ affinity: {}
 
 postgres:
   port: "5432"
+  service: account-minimal-cluster
+  secretfile: sonam.account-minimal-cluster.credentials.postgresql.acid.zalan.do
+  dbname: account
 
 
 envs:
