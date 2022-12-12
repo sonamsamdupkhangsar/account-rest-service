@@ -42,7 +42,7 @@ istio:
   enabled: false
 
 ingress:
-  enabled: true
+  enabled: false
   ingressClass: nginx
   hosts:
     - host: account-rest-service.sonam.cloud
