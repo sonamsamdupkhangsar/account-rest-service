@@ -67,7 +67,7 @@ flowchart TD
      secret is valid and not expired in passwordSecretRepository" --> authIdValid{authenticationId valid}
    authIdValid -->|Yes| secretValid{secred not expired and matches in repo}
    authIdValid -->|No| error400{return Http 400 error}
-   secretValid -->|Yes| -- activateAccount[activate account]
+   secretValid -->|Yes| activateAccount[activate account]
    activateAccount --"save account activated" --> AccountPgsqlDb[(account postgresqldb)]
    secretValid -->|No| error400
    accountPgsqlDb -->activateAccount
