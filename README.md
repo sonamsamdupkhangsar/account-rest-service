@@ -57,7 +57,7 @@ psql -U <USER> -d projectdb -h localhost -p 6432
 ```
 
 
-### Account Activation workflow
+### Account Activation workflow (Mermaidjs)
 ```mermaid
 flowchart TD
     User[user] --"click on account activation url link" -->  AccountRestService[account-rest-service] 
