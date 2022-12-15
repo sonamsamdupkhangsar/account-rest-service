@@ -65,7 +65,7 @@ flowchart TD
     UserRequest[user request] -->|user activates account with link to AccountRestService url| AccountRestService[account-rest-service] 
     AccountRestService --> | validate authenticationId exists accountRepository, secret is valid and not expired in passwordSecretRepository | AccountPgsqlDb[(account postgresqldb)]
     AccountPgsqlDb --> | activate account | AccountActivated[account-activation]
-    AccountActivated -- |save account in active state| AccountPgsqlDb
+    AccountActivated --> |save account in active state| AccountPgsqlDb
     AccountPgsqlDb --> | activate authentication by id with http call to url  authentication-rest-service/authentications/activate/{authenticationId}| AuthtenticationRestService[authentication-rest-service]
     AuthtenticationRestService --> |activate user by authenticaticationId with http call to url  user-rest-service/user/activate/{authenticationId} | UserRestService[user-rest-service]    
 ```
