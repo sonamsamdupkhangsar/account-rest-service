@@ -71,8 +71,9 @@ flowchart TD
    secretValid --"check passwordSecret repository" -->AccountPgsqlDb
    secretValid -->|Yes| activateAccount[activate account]
    activateAccount --"save account activated" --> AccountPgsqlDb
+   AccountPgsqlDb --> accountActivated["Account has been activated"]
    secretValid -->|No| error400
-   activateAccount -- "activate authentication by id with http call
+   accountActivated -- "activate authentication by id with http call
      to url  
      authentication-rest-service/authentications/activate/{authenticationId}" --> AuthtenticationRestService[authentication-rest-service]
     AuthtenticationRestService --"activate user by authenticaticationId 
