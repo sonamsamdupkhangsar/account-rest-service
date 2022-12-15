@@ -56,8 +56,6 @@ psql -U <USER> -d projectdb -h localhost -p 6432
 
 ```
 
-Workflow
-
 
 ### Account Activation workflow
 ```mermaid
