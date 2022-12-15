@@ -64,9 +64,14 @@ Workflow
 flowchart TD
     User[user] --"click on account activation url link" -->  AccountRestService[account-rest-service] 
     AccountRestService --"validate authenticationId exists accountRepository,
-     secret is valid and not expired in passwordSecretRepository" --> AccountPgsqlDb[(account postgresqldb)]
-    AccountPgsqlDb --> | activate account and save | AccountActivated[account-activation]
-    AccountActivated -- "activate authentication by id with http call
+     secret is valid and not expired in passwordSecretRepository" --> authIdValid{authenticationId valid}
+   authIdValid --|Yes| secretValid{secred not expired and matches in repo}
+   authIdValid --|No| error400{return Http 400 error}
+   secretValid --|Yes| -- activateAccount[activate account]
+   activateAccount --"save account activated" --> AccountPgsqlDb[(account postgresqldb)]
+   secretValid --|No| error400
+   accountPgsqlDb -->activateAccount
+   activateAccount -- "activate authentication by id with http call
      to url  
      authentication-rest-service/authentications/activate/{authenticationId}" --> AuthtenticationRestService[authentication-rest-service]
     AuthtenticationRestService --"activate user by authenticaticationId 
