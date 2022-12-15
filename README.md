@@ -77,11 +77,11 @@ flowchart TD
    
    accountActivated -.-> user-rest-service[user-rest-service]
     
-    subgraph authentication-rest-service
+    subgraph authentication-rest-service-graph
     authentication-rest-service["/authentications/activate/{authenticationId}"]
     end
     
-    subgraph user-rest-service
+    subgraph user-rest-service-graph
     user-rest-service["/user/activate/{authenticationId}"]
     end    
 ```
