@@ -73,15 +73,15 @@ flowchart TD
    activateAccount --"save account activated" --> AccountPgsqlDb
    AccountPgsqlDb --> accountActivated["Account activated"]
    secretValid -->|No| error400    
-   accountActivated -.-> authentication-rest-service["authentication-rest-service/authentications/activate/{authenticationId}"]
+   accountActivated -.-> authentication-rest-service-subgraph
    
-   accountActivated -.-> user-rest-service[user-rest-service]
+   accountActivated -.-> user-rest-service-subgraph[user-rest-service]
     
-    subgraph authentication-rest-service-graph
+    subgraph authentication-rest-service-subgraph
     authentication-rest-service["/authentications/activate/{authenticationId}"]
     end
     
-    subgraph user-rest-service-graph
+    subgraph user-rest-service-subgraph
     user-rest-service["/user/activate/{authenticationId}"]
     end    
 ```
