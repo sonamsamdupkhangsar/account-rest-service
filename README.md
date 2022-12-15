@@ -63,7 +63,7 @@ Workflow
 ```mermaid
 flowchart TD
     User[user] --"click on account activation url link" -->  AccountRestService[account-rest-service] 
-    AccountRestService --"validate authenticationId exists accountRepository" --> authIdValid{authenticationId valid}
+    AccountRestService --> authIdValid{authenticationId valid}
     authIdValid --"check account repository"--> AccountPgsqlDb[(account postgresqldb)]
    authIdValid -->|Yes| secretValid{"secred not expired and
     matches in passwordSecretRepository"}
