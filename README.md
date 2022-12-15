@@ -75,7 +75,7 @@ flowchart TD
    secretValid -->|No| error400    
    accountActivated -.-> authentication-rest-service-subgraph[authentication-rest-service]
    
-   accountActivated -.-> user-rest-service[user-rest-service]
+   accountActivated -.-> user-rest-service-subgraph[user-rest-service]
     
     subgraph authentication-rest-service-subgraph
     authentication-rest-service["/authentications/activate/{authenticationId}"]
