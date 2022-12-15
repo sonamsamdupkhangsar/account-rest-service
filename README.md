@@ -62,7 +62,7 @@ Workflow
 #### User Activate Account diagram
 ```mermaid
 flowchart TD
-    UserRequest[user request] -->|user activates account with link to AccountRestService url| AccountRestService[account-rest-service] 
+    User[user] --"click on account activation url link" -->  AccountRestService[account-rest-service] 
     AccountRestService --"validate authenticationId exists accountRepository,
      secret is valid and not expired in passwordSecretRepository" --> AccountPgsqlDb[(account postgresqldb)]
     AccountPgsqlDb --> | activate account and save | AccountActivated[account-activation]
