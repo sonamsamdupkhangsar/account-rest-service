@@ -68,6 +68,7 @@ flowchart TD
    authIdValid -->|Yes| secretValid{"secred not expired and
     matches in passwordSecretRepository"}
    authIdValid -->|No| error400{return Http 400 error}
+   secretValid --"check passwordSecret repository" -->AccountPgsqlDb
    secretValid -->|Yes| activateAccount[activate account]
    activateAccount --"save account activated" --> AccountPgsqlDb
    secretValid -->|No| error400
