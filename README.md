@@ -67,7 +67,7 @@ flowchart TD
     AccountPgsqlDb --> | activate account | AccountActivated[account-activation]
     AccountActivated --> |save account in active state| AccountPgsqlDb
     AccountPgsqlDb -- "activate authentication by id with http call to url  authentication-rest-service/authentications/activate/{authenticationId}" --> AuthtenticationRestService[authentication-rest-service]
-    AuthtenticationRestService --> |activate user by authenticaticationId with http call to url  user-rest-service/user/activate/{authenticationId} | UserRestService[user-rest-service]    
+    AuthtenticationRestService --"activate user by authenticaticationId with http call to url  user-rest-service/user/activate/{authenticationId}" --> UserRestService[user-rest-service]    
 ```
 
 
