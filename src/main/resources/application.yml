@@ -23,23 +23,33 @@ spring:
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     properties:
-      sslMode: REQUIRE
+      sslMode: ${DB_SSLMODE}
 
 
 user-rest-service:
-    root: http://user-rest-service-mychart.backend.svc.cluster.local:80
-    activate: /user/activate/
+    root: ${USER_REST_SERVICE_ROOT}
+    activate: /users/activate/
     delete: /user/
 
 authentication-rest-service:
-  root: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+  root: ${AUTHENTICATION_REST_SERVICE_ROOT}
   activate: /authentications/activate/
   delete: /authentications/
 
-#activate-user-rest-service: http://user-rest-service-mychart.backend.svc.cluster.local:80/user/activate/
-#activate-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications/activate/
-email-rest-service: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
+email-rest-service: ${EMAIL_REST_SERVICE}
+
 emailFrom: "kecha@sonam.email"
 account-activate-link: https://account-rest-service.sonam.cloud/public/accounts/activate
 emailBody: Please click on this link to activate your account
 secretExpire: 2
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
+
+jwt-rest-service-public-key-id: ${JWT_REST_SERVICE}
+
+me.sonam.jwt-validator:
+  permitpath:
+    - path: /api/health/*

@@ -1,0 +1,47 @@
+openapi: "3.0.2"
+info:
+  title: Account rest service api.
+  version: "1.0"
+
+security:
+  - bearerAuth: []
+servers:
+  - url: http://localhost:8086/accounts
+
+paths:
+  /accounts/active/authenticationId/{authenticationId}:
+    description: This endpoint will check if the account with this authenticationId is active,
+      returns boolean true or false.
+    get:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User is either active (true) or not active (false)
+          content:
+            application:/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: boolean
+        '400':
+          description: Failed to find a account with this authenticationId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -42,7 +42,7 @@ istio:
   enabled: false
 
 ingress:
-  enabled: true
+  enabled: false
   ingressClass: nginx
   hosts:
     - host: account-rest-service.sonam.cloud
@@ -75,9 +75,15 @@ affinity: {}
 postgres:
   port: "5432"
 
-
 envs:
-
+  - name: DB_SSLMODE
+    value: REQUIRE
+  - name: USER_REST_SERVICE_ROOT
+    value: http://user-rest-service-mychart.backend.svc.cluster.local:80
+  - name: AUTHENTICATION_REST_SERVICE_ROOT
+    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+  - name: EMAIL_REST_SERVICE
+    value: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
 
 health:
   liveness:

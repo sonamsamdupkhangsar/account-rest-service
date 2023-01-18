@@ -47,3 +47,28 @@ emailFrom: ""
 account-activate-link: https://account-rest-service.sonam.cloud/accounts/activate
 emailBody: Please click on this link to activate your account
 secretExpire: 2
+
+
+eureka:
+  client:
+    enabled: false
+
+me.sonam.jwt-validator:
+  permitpath:
+    - path: /api/health/*
+    - path: /accounts/active/*/*
+      httpMethods: GET
+    - path: /accounts/activate/*/*
+      httpMethods: GET
+    - path: /accounts/emailactivationlink/*
+      httpMethods: PUT
+    - path: /accounts/emailmysecret/*
+      httpMethods: PUT
+    - path: /accounts/*/*
+      httpMethods: POST
+    - path: /accounts/email/authenticationId/*
+      httpMethods: PUT
+    - path: /accounts/validate/secret/*/*
+      httpMethods: PUT
+
+jwt-rest-service-public-key-id: http://localhost:{port}/jwts/publickeys/{keyId}
