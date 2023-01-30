@@ -90,6 +90,7 @@ flowchart TD
 ## ActivateAccount
 ```mermaid
 flowchart TD
+  User --> account-rest-service
   account-rest-service --> activateAccount["activate account"]  
   activateAccount --> authenticationIdUnique{authenticationId unique?}
   
