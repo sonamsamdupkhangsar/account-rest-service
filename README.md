@@ -92,8 +92,11 @@ flowchart TD
 flowchart TD
   account-rest-service --> activateAccount["activate account"]
   activateAccount --> authenticationIdUnique["authenticationId unique"]
+  authenticationIdUnique --> accountDb[(account postgresdb)]
   authenticationIdUnique --> passwordSecretExists[PasswordSecretExists and Valid]
+  passwordSecretExists --> accountDb
   passwordSecretExists --"set account active to true in repo"--> accountActive
+  accountActive --> accountDb
   accountActive --"activate authentication"--> activateAuthentication[authentication-rest-service]
   activateAuthentication --"activate user"--> activateUser["user-rest-service"] 
 ```  
