@@ -182,3 +182,23 @@ flowchart TD
   validatePasswordSecretMatches -->|Yes, passwordSecret exists and matches| returnHttp200["return passwordsecret matches"]
   validatePasswordSecretMatches -->|No| returnError["Secret has expired or does not match"]           
 ```
+
+## Delete account by email
+```mermaid
+flowchart TD
+  User --"delete account by email"--> account-rest-service
+  account-rest-service --> accountWithEmailExists{account with email exists?}
+  accountWithEmailExists -->|No| returnError[Return 400 error to request]
+  accountWithEmailExists -->|Yes| passwordSecretExists{passwordSecret Exists?}
+  passwordSecretExists -->|Yes| passwordSecretExpired{passwordSecret has expired?}
+  passwordSecretExists -->|No| returnError
+  passwordSecretExpired -->|Yes| returnError
+  passwordSecretExpired -->|No| accountActiveWithAuthenticationIdAndActive{is account active?}
+  accountActiveWithAuthenticationIdAndActive -->|Yes| returnError
+  accountActiveWithAuthenticationIdAndActive -->|No| deleteUser[request to delete user]
+  deleteUser --> user-rest-service
+  user-rest-service --> deleteAuthentication[delete authentication]
+  deleteAuthentication --> authentication-rest-service
+  authentication-rest-service --> deleteAccount[delete account]           
+```
+
