@@ -96,7 +96,7 @@ flowchart TD
   authenticationIdUnique --> accountDb[(account postgresdb)]
   
   authenticationIdUnique --> |Yes| passwordSecretCheck[Check PasswordSecret]
-  authenticationIdUnique --> |No| ReturnError[End]
+  authenticationIdUnique --> |No| ReturnError[Return 400 error to request]
   
   passwordSecretCheck --> passwordSecretValid{PasswordSecretExists and Valid?}
   
