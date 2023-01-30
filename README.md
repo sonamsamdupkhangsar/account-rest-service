@@ -171,3 +171,14 @@ flowchart TD
   emailAuthenticationId --> email-rest-service
   accountIsActive -->|No| returnError                  
 ```
+
+## Validate email login secret
+```mermaid
+flowchart TD
+  User --"validate email login secret"--> account-rest-service
+  account-rest-service --> findByAuthenticationId["find by authenticationId"]
+  findByAuthenticationId --> validatePasswordSecretMatches{Deos passwordSecret match?]
+  validatePasswordSecretMatches --> accountDb[(accountDb postgresql)]
+  validatePasswordSecretMatches -->|Yes| returnHttp200["return passwordsecret matches"]
+  validatePasswordSecretMatches -->|Yes| returnError["Secret has expired or does not match"]           
+```
