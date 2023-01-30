@@ -115,12 +115,26 @@ flowchart TD
   User --"user requests to get a email activation link"--> account-rest-service
   account-rest-service --> validateAuthenticationIdExists["AuthenticationIdExists?"]
   validateAuthenticationIdExists --> accountDb[(account postgresdb)]
-  validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete secretPassword"]
+  validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
   deleteAnySecretPassword --> accountDb
   validateAuthenticationIdExists -->|No| ReturnError[Return 400 error to request]
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --> accountDb
   createNewSecretPassword --> emailActivationLink["email activation link"]
-  emailActivationLink --> email-rest-service
-                       
+  emailActivationLink --> email-rest-service                  
+```
+
+## Email User secret
+```mermaid
+flowchart TD
+  User --"user requests for a secret by email for password reset function"--> account-rest-service
+  account-rest-service --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+  AuthenticationIdExistsAndIsActive --> accountDb[(account postgresdb)]
+  AuthenticationIdExistsAndIsActive -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
+  deleteAnySecretPassword --> accountDb
+  validateAuthenticationIdExistsAndTrue -->|No| ReturnError[Return 400 error to request]
+  deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
+  createNewSecretPassword --> accountDb
+  createNewSecretPassword --> emailSecret["email secret"]
+  emailSecret --> email-rest-service                  
 ```
