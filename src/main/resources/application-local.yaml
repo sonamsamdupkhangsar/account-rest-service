@@ -1,10 +1,10 @@
 # This yaml file is for loading local database, server port, disable eureka and set jwt-rest-service endpoint
 server:
-  port: 8085
+  port: 8086
 
 POSTGRES_USERNAME: test
 POSTGRES_PASSWORD: test
-POSTGRES_DBNAME: account
+POSTGRES_DBNAME: account2
 POSTGRES_SERVICE: localhost:5432
 DB_SSLMODE: disable
 
@@ -26,4 +26,5 @@ authentication-rest-service:
   activate: /authentications/activate/
   delete: /authentications/
 
-email-rest-service: http://localhost:8085/email
+email-rest-service: http://localhost:8085/emails
+account-activate-link: http://localhost:8086/accounts/activate

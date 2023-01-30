@@ -314,7 +314,7 @@ public class AccountRestServiceTest {
         String emailTo = "emailActivationLink@sonam.co";
 
         Account account = new Account(emailTo, emailTo, true, LocalDateTime.now());
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -359,13 +359,13 @@ public class AccountRestServiceTest {
     @Test
     public void createAccount() throws InterruptedException {
         String emailTo = "createAccount@sonam.co";
-        mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody("email sent"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody("Account created successfully.  Check email for activating account"));
         EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+emailTo+"/"+emailTo)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
-        assertThat(result.getResponseBody().get("message")).isEqualTo("email sent");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -399,7 +399,7 @@ public class AccountRestServiceTest {
         Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", false, LocalDateTime.now());
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         LOG.info("try to POST with the same email/authId");
 
@@ -410,7 +410,7 @@ public class AccountRestServiceTest {
         assertThat(request.getMethod()).isEqualTo("POST");
         LOG.info("response: {}", result.getResponseBody().get("message"));
 
-        assertThat(result.getResponseBody().get("message")).isEqualTo("email sent");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
     }
 
 
@@ -464,7 +464,7 @@ public class AccountRestServiceTest {
         String email = "createAccount@sonam.co";
 
         Account account = new Account(authId, email, false, LocalDateTime.now());
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -481,7 +481,7 @@ public class AccountRestServiceTest {
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
-        assertThat(result.getResponseBody().get("message")).isEqualTo("email sent");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
 
         StepVerifier.create(accountRepository.findByAuthenticationId(authId)).assertNext(account1 ->
         {
@@ -534,7 +534,7 @@ public class AccountRestServiceTest {
         String authId = "sendAuthenticationId";
 
         Account account = new Account(authId, emailTo, true, LocalDateTime.now());
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 

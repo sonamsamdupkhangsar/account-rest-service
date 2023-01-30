@@ -39,7 +39,7 @@ authentication-rest-service:
 email-rest-service: ${EMAIL_REST_SERVICE}
 
 emailFrom: "kecha@sonam.email"
-account-activate-link: https://account-rest-service.sonam.cloud/public/accounts/activate
+account-activate-link: ${ACCOUNT_ACTIVATE_LINK}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
 
@@ -53,3 +53,17 @@ jwt-rest-service-public-key-id: ${JWT_REST_SERVICE}
 me.sonam.jwt-validator:
   permitpath:
     - path: /api/health/*
+    - path: /accounts/active/*/*
+      httpMethods: GET
+    - path: /accounts/activate/*/*
+      httpMethods: GET
+    - path: /accounts/emailactivationlink/*
+      httpMethods: PUT
+    - path: /accounts/emailmysecret/*
+      httpMethods: PUT
+    - path: /accounts/*/*
+      httpMethods: POST
+    - path: /accounts/email/authenticationId/*
+      httpMethods: PUT
+    - path: /accounts/validate/secret/*/*
+      httpMethods: PUT

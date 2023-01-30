@@ -5,6 +5,7 @@ import me.sonam.account.repo.AccountRepository;
 import me.sonam.account.repo.PasswordSecretRepository;
 import me.sonam.account.repo.entity.Account;
 import me.sonam.account.repo.entity.PasswordSecret;
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +64,7 @@ public class UserAccountService implements UserAccount {
 
     @PostConstruct
     public void setWebClient() {
-        webClient = WebClient.builder().build();
+        webClient = WebClient.builder().filter(ReactiveRequestContextHolder.headerFilter()).build();
     }
 
     @Override
@@ -107,6 +108,7 @@ public class UserAccountService implements UserAccount {
                         account.setActive(true);
                         account.setAccessDateTime(LocalDateTime.now());
                         account.setNewAccount(false);
+                        LOG.info("set account to active if not");
                         LOG.info("set account to active if not");
                     }
                     else {
@@ -184,7 +186,8 @@ public class UserAccountService implements UserAccount {
                 .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(authId)
                         .switchIfEmpty(Mono.error(new AccountException("no account with email")))
                         .zipWith(Mono.just(stringBuilder)))
-                .flatMap(objects -> email(objects.getT1().getEmail(), "Activation link", objects.getT2().toString()));
+                .flatMap(objects -> email(objects.getT1().getEmail(), "Activation link", objects.getT2().toString()))
+                .thenReturn("Email activation link has been sent");
     }
 
     @Override
@@ -214,7 +217,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(authenticationId)
                         .switchIfEmpty(Mono.error(new AccountException("no account with email")))
                         .zipWith(Mono.just(stringBuilder)))
-                .flatMap(objects -> email(objects.getT1().getEmail(), "Your requested information", objects.getT2().toString()));
+                .flatMap(objects -> email(objects.getT1().getEmail(),"Your requested information", objects.getT2().toString()));
     }
 
     /**
@@ -257,7 +260,8 @@ public class UserAccountService implements UserAccount {
                         .append(accountActivateLink).append("/").append(authenticationId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
-                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
+                .flatMap(stringBuilder -> email(email,"Activation link", stringBuilder.toString()))
+                .then(Mono.just("Account created successfully.  Check email for activating account"));
 
 
      /*   return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
@@ -305,7 +309,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(account -> Mono.just(new StringBuilder("Your reuqested login id "+ account.getAuthenticationId())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                         .zipWith(accountMono))
-                .flatMap(objects -> email(objects.getT2().getEmail(), "Your requested information", objects.getT1().toString()));
+                .flatMap(objects -> email(objects.getT2().getEmail(),"Your requested information", objects.getT1().toString()));
     }
 
     //authId/passwordsecret

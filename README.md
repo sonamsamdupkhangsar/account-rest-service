@@ -4,16 +4,28 @@ This is a Account Rest Service api built using Spring WebFlux.
 This is a reactive Java webservice api.
 
 
-## Run locally
+## Run locally using profile
+Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
+
 
 ```
-mvn spring-boot:run  -Dspring-boot.run.arguments="--POSTGRES_USERNAME=dummy \
-                      --POSTGRES_PASSWORD=dummy \
-                      --POSTGRES_DBNAME=account \
-                      --POSTGRES_SERVICE=localhost:5432"
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
 ```
- 
- 
+
+Or you can do something like following too:
+
+```
+mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8086 --jwt.issuer=sonam.us \
+    --POSTGRES_USERNAME=test \
+    --POSTGRES_PASSWORD=test \
+    --POSTGRES_DBNAME=account2 \
+    --POSTGRES_SERVICE=localhost:5432
+    --DB_SSLMODE=disable
+    --eureka.client.enabled=false"                      
+```
+
+
+
 ## Build Docker image
 
 Build docker image using included Dockerfile.
@@ -55,3 +67,23 @@ export PGSSLMODE=require;
 psql -U <USER> -d projectdb -h localhost -p 6432
 
 ```
+
+## User Account Workflow
+endpoints: 
+1. Create account
+2. Activate account
+3. Email activation link
+4. Password reset 
+5. Account active check
+6. Get authenticationId
+7. Validate Emailed Login Secret
+8. Delete account associated with email
+
+
+## Account active check workflow
+```mermaid
+flowchart TD
+  User[user request] --> account-rest-service["account-rest-service"]
+  account-rest-service --"account active?" --> accountRepository[(account db)]
+```
+## ActivateAccount

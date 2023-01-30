@@ -3,10 +3,8 @@ info:
   title: Account rest service api.
   version: "1.0"
 
-security:
-  - bearerAuth: []
 servers:
-  - url: http://localhost:8086/accounts
+  - url: http://localhost:8086
 
 paths:
   /accounts/active/authenticationId/{authenticationId}:
@@ -125,7 +123,6 @@ paths:
           required: true
           schema:
             type: string
-            format: email
       responses:
         '200':
           description: The account is successfully created.
@@ -215,14 +212,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BadResponseBody'
-
-
-
-
-
-
-
-
 
 components:
   securitySchemes:

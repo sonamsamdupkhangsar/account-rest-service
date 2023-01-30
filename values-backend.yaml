@@ -79,11 +79,14 @@ envs:
   - name: DB_SSLMODE
     value: REQUIRE
   - name: USER_REST_SERVICE_ROOT
-    value: http://user-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://user-rest-service-mychart.backend.svc.cluster.local:80/users
   - name: AUTHENTICATION_REST_SERVICE_ROOT
-    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications
   - name: EMAIL_REST_SERVICE
-    value: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
+    value: http://email-rest-service-mychart.backend.svc.cluster.local:80/emails
+  - name: ACCOUNT_ACTIVATE_LINK
+    value: https://account-rest-service.backend.svc.cluster.local:80/accounts/activate
+
 
 health:
   liveness:
