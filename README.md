@@ -143,7 +143,7 @@ flowchart TD
 ## Create account
 ```mermaid
 flowchart TD
-  User --"user requests for a secret by email for password reset function"--> account-rest-service
+  User --"Create account"--> account-rest-service
   account-rest-service --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
   validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
   validateAuthenticationIdExistsAndTrue -->|Yes| returnError[Return 400 error to request]  
