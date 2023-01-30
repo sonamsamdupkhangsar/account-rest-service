@@ -166,7 +166,7 @@ flowchart TD
   account-rest-service --> findByEmail{Account exists by email?}
   findByEmail --> accountDb[(account postgresdb)]
   findByEmail -->|Yes| accountIsActive{is account active?}  
-  findByemail -->|No| returnError[Return 400 error to request]
+  findByEmail -->|No| returnError[Return 400 error to request]
   accountIsActive -->|Yes| emailAuthenticationId[email authenticationid]
   emailAuthenticationId --> email-rest-service
   accountIsActive -->|No| returnError                  
