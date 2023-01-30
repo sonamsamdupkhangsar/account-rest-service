@@ -114,10 +114,11 @@ flowchart TD
 flowchart TD
   User --"user requests to get a email activation link"--> account-rest-service
   account-rest-service --> validateAuthenticationIdExists["AuthenticationIdExists?"]
+  validateAuthenticationIdExists --> accountDb[(account postgresdb)]
   validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete secretPassword"]
   validateAuthenticationIdExists -->|No| ReturnError[Return 400 error to request]
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
-  createNewSecretPassword --> accountDb[(account postgresdb)]
+  createNewSecretPassword --> accountDb
   createNewSecretPassword --> emailActivationLink["email activation link"]
   emailActivationLink --> email-rest-service
                        
