@@ -87,3 +87,16 @@ flowchart TD
   account-rest-service --"account active?" --> accountRepository[(account db)]
 ```
 ## ActivateAccount
+```mermiad
+flowchart TD
+  User[user request] --> account-rest-service["account-rest-service"]
+  account-rest-service --> activateAccount["account activate"]
+  activateAccount --> authenticationIdUnique["authenticationId not used already"]
+  authenticationIdUnique --"account has a valid passwordSecret entity in repo to activate"--> passwordSecretExists[PasswordSecretExists and Valid]
+  passwordSecretExists --"set account active to true in repo"--> activateAccount["activate account"]
+  activateAccount --"activate authentication"--> activateAuthentication["authentication-rest-service"]
+  acticateAuthentication --"activate user"--> activateUser["user-rest-service"] 
+  
+  
+                      
+```
