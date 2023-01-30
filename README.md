@@ -151,6 +151,7 @@ flowchart TD
   existsByEmail -->|Yes| returnError
   existsByEmail -->|No| deleteAuthenticationIdActiveFalse["delete previous Authentication"]
   deleteAuthenticationIdActiveFalse --> save["create Authentication"]
+  save --> accountDb
   save --> createPasswordSecret
   createPasswordSecret --> accountDb
   createPasswordSecret --> emailActivationLink["email activation link"]
