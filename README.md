@@ -103,7 +103,7 @@ flowchart TD
   passwordSecretValid --> accountDb
   passwordSecretValid -->|Yes| setAccountActive   
   setAccountActive --> accountDb
-  setAccountActive --"activate authentication"--> activateAuthentication[authentication-rest-service]
+  setAccountActive --"activate authentication"--> activateAuthentication[authentication-rest-service] 
   passwordSecretValid -->|No| ReturnError
   activateAuthentication --"activate user"--> activateUser["user-rest-service"] 
 ```  
