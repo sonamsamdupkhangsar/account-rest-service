@@ -90,13 +90,12 @@ flowchart TD
 ## ActivateAccount
 ```mermaid
 flowchart TD
-  User[user request] --> account-rest-service["account-rest-service"]
-  account-rest-service --> activateAccount["account activate"]
-  activateAccount --> authenticationIdUnique["authenticationId not used already"]
-  authenticationIdUnique --"account has a valid passwordSecret entity in repo to activate"--> passwordSecretExists[PasswordSecretExists and Valid]
-  passwordSecretExists --"set account active to true in repo"--> activateAccount["activate account"]
-  activateAccount --"activate authentication"--> activateAuthentication["authentication-rest-service"]
-  acticateAuthentication --"activate user"--> activateUser["user-rest-service"] 
+  account-rest-service --> activateAccount["activate account"]
+  activateAccount --> authenticationIdUnique["authenticationId unique"]
+  authenticationIdUnique --> passwordSecretExists[PasswordSecretExists and Valid]
+  passwordSecretExists --"set account active to true in repo"--> accountActive
+  accountActive --"activate authentication"--> activateAuthentication[authentication-rest-service]
+  activateAuthentication --"activate user"--> activateUser["user-rest-service"] 
 ```  
   
                       
