@@ -192,8 +192,8 @@ flowchart TD
   accountWithEmailExists -->|Yes| passwordSecretExists{passwordSecret Exists?}
   passwordSecretExists -->|Yes| passwordSecretExpired{passwordSecret has expired?}
   passwordSecretExists -->|No| returnError
-  passwordSecretExpired -->|Yes| returnError
-  passwordSecretExpired -->|No| accountActiveWithAuthenticationIdAndActive{is account active?}
+  passwordSecretExpired -->|No| returnError
+  passwordSecretExpired -->|Yes| accountActiveWithAuthenticationIdAndActive{is account active?}
   accountActiveWithAuthenticationIdAndActive -->|Yes| returnError
   accountActiveWithAuthenticationIdAndActive -->|No| deleteUser[request to delete user]
   deleteUser --> user-rest-service
