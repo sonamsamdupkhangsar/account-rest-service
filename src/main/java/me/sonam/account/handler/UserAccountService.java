@@ -262,37 +262,6 @@ public class UserAccountService implements UserAccount {
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email,"Activation link", stringBuilder.toString()))
                 .then(Mono.just("Account created successfully.  Check email for activating account"));
-
-
-     /*   return accountRepository.existsByAuthenticationIdOrEmail(authenticationId, email).filter(aBoolean -> !aBoolean)
-                .switchIfEmpty(Mono.error(new AccountException("Account already exists with authenticationId or email")))
-                .flatMap(aBoolean -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
-                .flatMap(account -> accountRepository.save(account))
-                .flatMap(account -> Mono.just("saved account with In-Active state"))
-                 .doOnNext(s -> {
-                     LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
-                    passwordSecretRepository.deleteById(authenticationId);
-                })
-                .flatMap(unused -> {
-                    LOG.info("generate random text: {}", unused);
-                    return generateRandomText(10);
-                })
-                .flatMap(randomText -> Mono.just(new PasswordSecret(authenticationId, randomText,
-                        ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(secretExpiresInHour))))
-                .flatMap(passwordSecret -> {
-                    LOG.info("passwordSecret created");
-                    return passwordSecretRepository.save(passwordSecret);
-                })
-                .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
-                        .append(accountActivateLink).append("/").append(authenticationId)
-                        .append("/").append(passwordSecret.getSecret())
-                        .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
-                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));*/
-               /* .onErrorResume(throwable -> {
-                    LOG.info("rollback account created on failure");
-                    accountRepository.(authenticationId).subscribe();
-                })
-*/
     }
 
     @Override

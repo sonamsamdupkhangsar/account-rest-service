@@ -138,3 +138,21 @@ flowchart TD
   createNewSecretPassword --> emailSecret["email secret"]
   emailSecret --> email-rest-service                  
 ```
+
+
+## Create account
+```mermaid
+flowchart TD
+  User --"user requests for a secret by email for password reset function"--> account-rest-service
+  account-rest-service --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+  validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
+  validateAuthenticationIdExistsAndTrue -->|Yes| returnError[Return 400 error to request]  
+  validateAuthenticationIdExistsAndTrue -->|No| existsByEmail{email already used?}
+  existsByEmail -->|Yes| returnError
+  existByEmail --"Delete any previous Authentication false active record"-->|No| deleteAuthenticationIdActiveFalse["delete previous Authentication"]
+  deleteAuthenticationIdActiveFalse --> save["create Authentication"]
+  save --> createPasswordSecret
+  createPasswordSecret --> accountDb
+  createPasswordSecret --> emailActivationLink["email activation link"]
+  emailActivationLink --> email-rest-service
+```
