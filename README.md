@@ -157,3 +157,17 @@ flowchart TD
   createPasswordSecret --> emailActivationLink["email activation link"]
   emailActivationLink --> email-rest-service
 ```
+
+
+## Send authenticationId by email
+```mermaid
+flowchart TD
+  User --"user requests to get authenticationId, maybe they forgot?"--> account-rest-service
+  account-rest-service --> findByEmail{Account exists by email?}
+  findByEmail --> accountDb[(account postgresdb)]
+  findByEmail -->|Yes| accountIsActive{is account active?}  
+  findByemail -->|No| returnError[Return 400 error to request]
+  accountIsActive -->|Yes| emailAuthenticationId[email authenticationid]
+  emailAuthenticationId --> email-rest-service
+  accountIsActive -->|No| returnError                  
+```
