@@ -116,6 +116,7 @@ flowchart TD
   account-rest-service --> validateAuthenticationIdExists["AuthenticationIdExists?"]
   validateAuthenticationIdExists --> accountDb[(account postgresdb)]
   validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete secretPassword"]
+  deleteAnySecretPassword --> accountDb
   validateAuthenticationIdExists -->|No| ReturnError[Return 400 error to request]
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --> accountDb
