@@ -199,6 +199,7 @@ flowchart TD
   deleteUser --> user-rest-service
   user-rest-service --> deleteAuthentication[delete authentication]
   deleteAuthentication --> authentication-rest-service
-  authentication-rest-service --> deleteAccount[delete account]           
+  authentication-rest-service --> deleteAccount[delete account]
+  deleteAccount --> accountDb[(accountDb postgresql)]           
 ```
 
