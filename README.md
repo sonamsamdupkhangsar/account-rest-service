@@ -96,7 +96,7 @@ flowchart TD
   passwordSecretExists --"set account active to true in repo"--> activateAccount["activate account"]
   activateAccount --"activate authentication"--> activateAuthentication["authentication-rest-service"]
   acticateAuthentication --"activate user"--> activateUser["user-rest-service"] 
-  
+```  
   
                       
 ```
