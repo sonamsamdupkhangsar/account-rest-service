@@ -149,7 +149,7 @@ flowchart TD
   validateAuthenticationIdExistsAndTrue -->|Yes| returnError[Return 400 error to request]  
   validateAuthenticationIdExistsAndTrue -->|No| existsByEmail{email already used?}
   existsByEmail -->|Yes| returnError
-  existByEmail --"Delete any previous Authentication false active record"-->|No| deleteAuthenticationIdActiveFalse["delete previous Authentication"]
+  existByEmail -->|No| deleteAuthenticationIdActiveFalse["delete previous Authentication"]
   deleteAuthenticationIdActiveFalse --> save["create Authentication"]
   save --> createPasswordSecret
   createPasswordSecret --> accountDb
