@@ -86,8 +86,9 @@ flowchart TD
   User[user request] --> account-rest-service["account-rest-service"]
   account-rest-service --"account active?" --> accountRepository[(account db)]
 ```
+
 ## ActivateAccount
-```mermiad
+```mermaid
 flowchart TD
   User[user request] --> account-rest-service["account-rest-service"]
   account-rest-service --> activateAccount["account activate"]
