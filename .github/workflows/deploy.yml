@@ -62,9 +62,6 @@ jobs:
             --set "image.repository=ghcr.io/sonamsamdupkhangsar/$PROJECT_NAME" \
             --set "image.tag=latest" \
             --set "project=$PROJECT_NAME" \
-            --set "postgres.secretfile=${{ secrets.POSTGRES_SECRET_FILE }}" \
-            --set "postgres.service=${{ secrets.POSTGRES_SERVICE }}" \
-            --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
              $PROJECT_NAME \
             sonam/mychart -f values-backend.yaml --version 0.1.21 --namespace=backend
 
