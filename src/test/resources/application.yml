@@ -32,8 +32,8 @@ POSTGRES_PASSWORD: dpassword
 
 user-rest-service:
   root: http://localhost:{port}
-  activate: /user/activate/
-  delete: /user/
+  activate: /users/activate/
+  delete: /users/
 
 authentication-rest-service:
   root: http://localhost:{port}
@@ -53,22 +53,41 @@ eureka:
   client:
     enabled: false
 
-me.sonam.jwt-validator:
-  permitpath:
-    - path: /api/health/*
-    - path: /accounts/active/*/*
-      httpMethods: GET
-    - path: /accounts/activate/*/*
-      httpMethods: GET
-    - path: /accounts/emailactivationlink/*
-      httpMethods: PUT
-    - path: /accounts/emailmysecret/*
-      httpMethods: PUT
-    - path: /accounts/*/*
-      httpMethods: POST
-    - path: /accounts/email/authenticationId/*
-      httpMethods: PUT
-    - path: /accounts/validate/secret/*/*
-      httpMethods: PUT
+permitpath:
+  - path: /api/health/*
+  - path: /accounts/active/*/*
+    httpMethods: GET
+  - path: /accounts/activate/*/*
+    httpMethods: GET
+  - path: /accounts/emailactivationlink/*
+    httpMethods: PUT
+  - path: /accounts/emailmysecret/*
+    httpMethods: PUT
+  - path: /accounts/*/*
+    httpMethods: POST
+  - path: /accounts/email/authenticationId/*
+    httpMethods: PUT
+  - path: /accounts/validate/secret/*/*
+    httpMethods: PUT
+
+# request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
+jwtrequest:
+  - in: /accounts/(.)*/(.)*
+    out: /emails
+    jwt: request
+  - in:  /accounts/emailactivationlink/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/emailmysecret/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/email/authenticationId/(.)*
+    out: /emails
+    jwt: request
 
 jwt-rest-service-public-key-id: http://localhost:{port}/jwts/publickeys/{keyId}
+jwt-rest-service-accesstoken: http://localhost:{port}/jwts/accesstoken
+hmackey:
+  clientId: account-rest-service
+  hmacMD5Algorithm: HmacMD5
+  secretKey: mysecret

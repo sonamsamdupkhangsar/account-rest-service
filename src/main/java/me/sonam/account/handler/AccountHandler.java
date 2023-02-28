@@ -34,7 +34,7 @@ public class AccountHandler implements Handler {
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
         .onErrorResume(e -> {
             LOG.error("is account active check failed", e);
-            return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
+            return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("error", e.getMessage())));
         });
     }
 
@@ -67,7 +67,7 @@ public class AccountHandler implements Handler {
                 ServerResponse.created(URI.create("/accounts/")).contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("create account failed", e);
+                    LOG.error("create account failed: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }
@@ -117,7 +117,7 @@ public class AccountHandler implements Handler {
                 });
     }
 
-    private Map<String, String> getMap(Pair<String, String>... pairs){
+    public static Map<String, String> getMap(Pair<String, String>... pairs){
 
         Map<String, String> map = new HashMap<>();
 

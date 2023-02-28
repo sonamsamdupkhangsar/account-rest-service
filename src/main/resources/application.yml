@@ -29,7 +29,7 @@ spring:
 user-rest-service:
     root: ${USER_REST_SERVICE_ROOT}
     activate: /users/activate/
-    delete: /user/
+    delete: /users/
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE_ROOT}
@@ -48,22 +48,40 @@ eureka:
     serviceUrl:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
 
-jwt-rest-service-public-key-id: ${JWT_REST_SERVICE}
+permitpath:
+  - path: /api/health/*
+  - path: /accounts/active/*/*
+    httpMethods: GET
+  - path: /accounts/activate/*/*
+    httpMethods: GET
+  - path: /accounts/emailactivationlink/*
+    httpMethods: PUT
+  - path: /accounts/emailmysecret/*
+    httpMethods: PUT
+  - path: /accounts/*/*
+    httpMethods: POST
+  - path: /accounts/email/authenticationId/*
+    httpMethods: PUT
+  - path: /accounts/validate/secret/*/*
+    httpMethods: PUT
 
-me.sonam.jwt-validator:
-  permitpath:
-    - path: /api/health/*
-    - path: /accounts/active/*/*
-      httpMethods: GET
-    - path: /accounts/activate/*/*
-      httpMethods: GET
-    - path: /accounts/emailactivationlink/*
-      httpMethods: PUT
-    - path: /accounts/emailmysecret/*
-      httpMethods: PUT
-    - path: /accounts/*/*
-      httpMethods: POST
-    - path: /accounts/email/authenticationId/*
-      httpMethods: PUT
-    - path: /accounts/validate/secret/*/*
-      httpMethods: PUT
+# request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
+jwtrequest:
+  - in:  /accounts/emailactivationlink/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/emailmysecret/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/email/authenticationId/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/(.)*/(.)*
+    out: /emails
+    jwt: forward
+  - in: /accounts/activate/(.)*/(.)*
+    out: /users/activate/(.)*
+    jwt: request
+
+jwt-rest-service-public-key-id: ${jwt-rest-service-public-key-id}
+jwt-rest-service-accesstoken: ${jwt-rest-service-accesstoken}

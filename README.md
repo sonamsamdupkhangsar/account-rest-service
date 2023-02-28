@@ -203,3 +203,4 @@ flowchart TD
   deleteAccount --> accountDb[(accountDb postgresql)]           
 ```
 
+If Account is not getting activated, try resend email activation link

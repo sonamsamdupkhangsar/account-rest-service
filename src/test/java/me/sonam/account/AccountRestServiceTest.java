@@ -69,9 +69,10 @@ public class AccountRestServiceTest {
     private ReactiveJwtDecoder jwtDecoder;
     private static MockWebServer mockWebServer;
 
-    private static String emailEndpoint = "http://localhost:{port}/email";
+    private static String emailEndpoint = "http://localhost:{port}/emails";
     private static String activateAuthenticationEndpoint = "http://localhost:{port}";///authentications/activate/";
     private static String activateUserEndpoint = "http://localhost:{port}";///user/activate/";
+    private static String jwtRestServiceAccesstoken = "http://localhost:{port}/jwts/accesstoken";
 
     @Before
     public void setUp() {
@@ -91,6 +92,9 @@ public class AccountRestServiceTest {
     public void deleteALl() {
         accountRepository.deleteAll().subscribe(unused -> LOG.info("deleted all accounts"));
         passwordSecretRepository.deleteAll().subscribe(unused -> LOG.info("deleted all password secrets"));
+
+        LOG.info("request coountmockWebServer.getRequestCount(): {}",mockWebServer.getRequestCount());
+
     }
 
     @AfterAll
@@ -107,6 +111,7 @@ public class AccountRestServiceTest {
         r.add("authentication-rest-service.root", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
         //r.add("activate-user-rest-service", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
         r.add("user-rest-service.root", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
+        r.add("jwt-rest-service-accesstoken", () -> jwtRestServiceAccesstoken.replace("{port}", mockWebServer.getPort()+""));
         LOG.info("updated email-rest-service properties: {}" );
         LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
     }
@@ -148,11 +153,11 @@ public class AccountRestServiceTest {
         assertThat(result.getResponseBody().get("message")).isEqualTo("account activated");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("PUT");
-        mockWebServer.takeRequest();
+        assertThat(request.getPath()).isEqualTo("/authentications/activate/"+authenticationId);
 
-        LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/authentications/activate/");
-
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("PUT");
+        assertThat(request.getPath()).isEqualTo("/users/activate/"+authenticationId);
 
         accountRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
                 assertNext(account1 -> {
@@ -275,9 +280,15 @@ public class AccountRestServiceTest {
         Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
 
-       // webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
+
 
         EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailactivationlink/"+emailTo)
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
@@ -285,14 +296,17 @@ public class AccountRestServiceTest {
         LOG.info("response: {}", result.getResponseBody().get("message")) ;
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+
+        request = mockWebServer.takeRequest();
+        LOG.info("assert the path for authenticate was created using path '/create'");
+        assertThat(request.getPath()).startsWith("/emails");
 
         //the body is empty for some reason.
         String body = new String(request.getBody().getBuffer().readByteArray());
         LOG.info("path: {}", request.getPath());
         LOG.info("request: {}", body);
-
-        LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/email");
     }
 
     /**
@@ -314,20 +328,31 @@ public class AccountRestServiceTest {
         String emailTo = "emailActivationLink@sonam.co";
 
         Account account = new Account(emailTo, emailTo, true, LocalDateTime.now());
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
+        //mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
         EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
-        assertThat(result.getResponseBody().get("message")).isEqualTo("email sent");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("email successfully sent");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
+
+        request = mockWebServer.takeRequest();
         LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/email");
+        assertThat(request.getPath()).startsWith("/emails");
     }
 
     @Test
@@ -359,21 +384,48 @@ public class AccountRestServiceTest {
     @Test
     public void createAccount() throws InterruptedException {
         String emailTo = "createAccount@sonam.co";
-        mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody("Account created successfully.  Check email for activating account"));
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
+
+//        mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody("Account created successfully.  Check email for activating account"));
         EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+emailTo+"/"+emailTo)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody().get("message"));
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+
+        request = mockWebServer.takeRequest();
+        LOG.info("assert the path for authenticate was created using path '/create'");
+        assertThat(request.getPath()).startsWith("/emails");
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
         assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
 
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("POST");
 
-        LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/email");
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
+
+        //RecordedRequest request = mockWebServer.takeRequest();
+       // assertThat(request.getMethod()).isEqualTo("POST");
+
+        //LOG.info("assert the path for authenticate was created using path '/create'");
+        //assertThat(request.getPath()).startsWith("/email");
     }
 
+    /**
+     * this will create a account that is not active (false) and try to overwrite it if it's false.
+     * which is allowable if the account creation didn't go thru successfully the first time.
+     * @throws InterruptedException
+     */
     @Test
     public void createAccountWithExistingAuthIdAndEmail() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
@@ -383,13 +435,28 @@ public class AccountRestServiceTest {
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
         LOG.info("try to POST with the same email/authId");
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
         EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
-                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
 
-        LOG.info("response: {}", result.getResponseBody().get("error"));
-        assertThat(result.getResponseBody().get("error")).isEqualTo("a user with this email already exists");
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/emails");
+
     }
 
     @Test
@@ -399,7 +466,14 @@ public class AccountRestServiceTest {
         Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", false, LocalDateTime.now());
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
+        //mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
         LOG.info("try to POST with the same email/authId");
 
@@ -408,7 +482,14 @@ public class AccountRestServiceTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        LOG.info("response: {}", result.getResponseBody().get("message"));
+        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/emails");
 
         assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
     }
@@ -464,7 +545,16 @@ public class AccountRestServiceTest {
         String email = "createAccount@sonam.co";
 
         Account account = new Account(authId, email, false, LocalDateTime.now());
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
+        LOG.info("try to POST with the same email/authId");
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
+
+//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -475,9 +565,12 @@ public class AccountRestServiceTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
+
+        request = mockWebServer.takeRequest();
         LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/email");
+        assertThat(request.getPath()).startsWith("/emails");
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
@@ -524,7 +617,6 @@ public class AccountRestServiceTest {
 
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
-        //assertThat(result.getResponseBody().get("message")).isEqualTo("Account already exists with authenticationId or email");
         assertThat(result.getResponseBody().get("error")).isEqualTo("a user with this email already exists");
     }
 
@@ -534,7 +626,14 @@ public class AccountRestServiceTest {
         String authId = "sendAuthenticationId";
 
         Account account = new Account(authId, emailTo, true, LocalDateTime.now());
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
+        //mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -542,12 +641,15 @@ public class AccountRestServiceTest {
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
-        assertThat(result.getResponseBody().get("message")).isEqualTo("email sent");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("email successfully sent");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
+
+        request = mockWebServer.takeRequest();
         LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/email");
+        assertThat(request.getPath()).startsWith("/emails");
     }
 
     @Test
@@ -692,7 +794,7 @@ public class AccountRestServiceTest {
         assertThat(result.getResponseBody().get("message")).isEqualTo("deleted authenticationId that is active false");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
-        assertThat(request.getPath()).isEqualTo("/user/deleteWithPasswordSecretAndAccountFalse");
+        assertThat(request.getPath()).isEqualTo("/users/deleteWithPasswordSecretAndAccountFalse");
 
         LOG.info("1. path: {}", request.getPath());
         request = mockWebServer.takeRequest();
