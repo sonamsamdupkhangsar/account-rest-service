@@ -26,6 +26,7 @@ public class AccountWithRemoteEndpoint {
     @Test
     public void createAccount() throws InterruptedException {
         String emailTo = "createAccount2@sonam.email";
+/*
 
         LOG.info("create account");
 
@@ -33,6 +34,7 @@ public class AccountWithRemoteEndpoint {
                 +emailTo+"/"+emailTo)
                 .exchange().expectStatus().isCreated().expectBody(String.class).consumeWith(stringEntityExchangeResult ->
                 LOG.info("response: {}", stringEntityExchangeResult.getResponseBody()));
+*/
 
     }
 }

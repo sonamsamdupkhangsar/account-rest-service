@@ -81,14 +81,16 @@ postgres:
 envs:
   - name: DB_SSLMODE
     value: REQUIRE
-  - name: USER_REST_SERVICE_ROOT
-    value: http://user-rest-service-mychart.backend.svc.cluster.local:80/users
-  - name: AUTHENTICATION_REST_SERVICE_ROOT
-    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications
+  - name: USER_REST_SERVICE
+    value: http://user-rest-service-mychart.backend.svc.cluster.local:80
+  - name: AUTHENTICATION_REST_SERVICE
+    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+  - name: JWT_REST_SERVICE
+    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
   - name: EMAIL_REST_SERVICE
-    value: http://email-rest-service-mychart.backend.svc.cluster.local:80/emails
-  - name: ACCOUNT_ACTIVATE_LINK
-    value: https://account-rest-service.backend.svc.cluster.local:80/accounts/activate
+    value: http://email-rest-service-mychart.backend.svc.cluster.local:80
+  - name: ACCOUNT_REST_SERVICE
+    value: https://account-rest-service.backend.svc.cluster.local:80
 
 
 health:
@@ -104,3 +106,20 @@ health:
     initialDelaySeconds: 60
     periodSeconds: 5
     failureThreshold: 5
+
+
+secretFiles:
+  - file: eureka-discovery
+    keys:
+      - key: user
+        name: EUREKA_USER
+      - key: password
+        name: EUREKA_PASSWORD
+  - file: authentication-rest-service
+    keys:
+      - key: hmac.clientId
+        name: hmackey.clientId
+      - key: hmac.algorithm
+        name: hmackey.hmacMD5Algorithm
+      - key: hmac.secret
+        name: hmackey.secretKey

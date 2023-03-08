@@ -27,16 +27,32 @@ spring:
 
 
 user-rest-service:
-    root: ${USER_REST_SERVICE_ROOT}
+    root: ${USER_REST_SERVICE}
     activate: /users/activate/
     delete: /users/
 
 authentication-rest-service:
-  root: ${AUTHENTICATION_REST_SERVICE_ROOT}
+  root: ${AUTHENTICATION_REST_SERVICE}
   activate: /authentications/activate/
   delete: /authentications/
 
-email-rest-service: ${EMAIL_REST_SERVICE}
+jwt-service:
+  root: ${JWT_REST_SERVICE}
+  public-key-id: /jwts/publickeys/{keyId}
+  accesstoken: /jwts/accesstoken
+
+email-rest-service:
+  root: ${EMAIL_REST_SERVICE}
+  emails: /emails
+
+account-rest-service:
+  root: ${ACCOUNT_REST_SERVICE}
+  activate: /accounts/activate
+
+hmacKey:
+  clientId: ${hmacKey.clientId}
+  algorithm: ${hmacKey.algorithm}
+  secretKey: ${hmacKey.secretKey}
 
 emailFrom: "kecha@sonam.email"
 account-activate-link: ${ACCOUNT_ACTIVATE_LINK}
@@ -82,6 +98,3 @@ jwtrequest:
   - in: /accounts/activate/(.)*/(.)*
     out: /users/activate/(.)*
     jwt: request
-
-jwt-rest-service-public-key-id: ${jwt-rest-service-public-key-id}
-jwt-rest-service-accesstoken: ${jwt-rest-service-accesstoken}

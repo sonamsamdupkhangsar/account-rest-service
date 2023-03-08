@@ -29,7 +29,6 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
-
 user-rest-service:
   root: http://localhost:{port}
   activate: /users/activate/
@@ -40,14 +39,23 @@ authentication-rest-service:
   activate: /authentications/activate/
   delete: /authentications/
 
-#activate-user-rest-service: http://localhost:{port}/user/activate/
-#activate-authentication-rest-service: http://localhost:{port}/authentications/activate/
-email-rest-service: https://email-rest-service.sonam.cloud/email
+jwt-service:
+  root: http://localhost:{port}
+  public-key-id: /jwts/publickeys/{keyId}
+  accesstoken: /jwts/accesstoken
+
+email-rest-service:
+  root: http://localhost:{port}
+  emails: /emails
+
+account-rest-service:
+  root: http://localhost:{port}
+  activate: /accounts/activate
+
 emailFrom: ""
 account-activate-link: https://account-rest-service.sonam.cloud/accounts/activate
 emailBody: Please click on this link to activate your account
 secretExpire: 2
-
 
 eureka:
   client:
@@ -85,9 +93,7 @@ jwtrequest:
     out: /emails
     jwt: request
 
-jwt-rest-service-public-key-id: http://localhost:{port}/jwts/publickeys/{keyId}
-jwt-rest-service-accesstoken: http://localhost:{port}/jwts/accesstoken
-hmackey:
+hmacKey:
   clientId: account-rest-service
-  hmacMD5Algorithm: HmacMD5
+  algorithm: HmacMD5
   secretKey: mysecret

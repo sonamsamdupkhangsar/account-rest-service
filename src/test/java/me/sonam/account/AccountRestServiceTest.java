@@ -69,10 +69,10 @@ public class AccountRestServiceTest {
     private ReactiveJwtDecoder jwtDecoder;
     private static MockWebServer mockWebServer;
 
-    private static String emailEndpoint = "http://localhost:{port}/emails";
+    private static String emailEndpoint = "http://localhost:{port}";
     private static String activateAuthenticationEndpoint = "http://localhost:{port}";///authentications/activate/";
     private static String activateUserEndpoint = "http://localhost:{port}";///user/activate/";
-    private static String jwtRestServiceAccesstoken = "http://localhost:{port}/jwts/accesstoken";
+    private static String jwtRestServiceAccesstoken = "http://localhost:{port}";///jwts/accesstoken";
 
     @Before
     public void setUp() {
@@ -106,14 +106,10 @@ public class AccountRestServiceTest {
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) throws IOException {
-        r.add("email-rest-service", () -> emailEndpoint.replace("{port}", mockWebServer.getPort() + ""));
-        //r.add("activate-authentication-rest-service", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
-        r.add("authentication-rest-service.root", () -> activateAuthenticationEndpoint.replace("{port}",  mockWebServer.getPort()+""));
-        //r.add("activate-user-rest-service", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
-        r.add("user-rest-service.root", () -> activateUserEndpoint.replace("{port}",  mockWebServer.getPort()+""));
-        r.add("jwt-rest-service-accesstoken", () -> jwtRestServiceAccesstoken.replace("{port}", mockWebServer.getPort()+""));
-        LOG.info("updated email-rest-service properties: {}" );
-        LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
+        r.add("email-rest-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
+        r.add("authentication-rest-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
+        r.add("user-rest-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
+        r.add("jwt-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
     }
 
     @AfterEach

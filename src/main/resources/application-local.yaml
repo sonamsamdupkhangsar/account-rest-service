@@ -12,26 +12,13 @@ eureka:
   client:
     enabled: false
 
-# jwt-rest-service on port 8081 local server
-APPLICATION_REST_SERVICE: http://localhost:8082/applications
+USER_REST_SERVICE: http://localhost:8084
+AUTHENTICATION_REST_SERVICE: http://localhost:8083
+EMAIL_REST_SERVICE: http://localhost:8085
+ACCOUNT_REST_SERVICE: http://localhost:8086
+JWT_REST_SERVICE: http://localhost:8081
 
-user-rest-service:
-  root: http://localhost:8084
-  activate: /users/activate/
-  delete: /users
-
-authentication-rest-service:
-  root: http://localhost:8083
-  activate: /authentications/activate/
-  delete: /authentications/
-
-email-rest-service: http://localhost:8085/emails
-account-activate-link: http://localhost:8086/accounts/activate
-
-jwt-rest-service-public-key-id: http://localhost:8081/jwts/publickeys/{keyId}
-jwt-rest-service-accesstoken: http://localhost:8081/jwts/accesstoken
-
-hmackey:
+hmacKey:
   clientId: account-rest-service
-  hmacMD5Algorithm: HmacMD5
+  algorithm: HmacMD5
   secretKey: mysecret

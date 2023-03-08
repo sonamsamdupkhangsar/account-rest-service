@@ -1,19 +1,16 @@
 package me.sonam.account.handler;
 
 import me.sonam.account.handler.email.Email;
-import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
-import me.sonam.security.util.HmacClient;
 import me.sonam.account.repo.AccountRepository;
 import me.sonam.account.repo.PasswordSecretRepository;
 import me.sonam.account.repo.entity.Account;
 import me.sonam.account.repo.entity.PasswordSecret;
-import me.sonam.security.util.Util;
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.security.util.HmacClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -32,23 +29,20 @@ public class UserAccountService implements UserAccount {
     private WebClient webClient;
 
     @Value("${user-rest-service.root}${user-rest-service.activate}")
-    //@Value("${activate-user-rest-service}")
     private String activateUser;
 
     @Value("${user-rest-service.root}${user-rest-service.delete}")
-    //@Value("${activate-user-rest-service}")
     private String deleteUser;
 
-//    @Value("${activate-authentication-rest-service}")
     @Value("${authentication-rest-service.root}${authentication-rest-service.activate}")
     private String activateAuthentication;
 
-    @Value("${jwt-rest-service-accesstoken}")
+    @Value("${jwt-service.root}${jwt-service.accesstoken}")
     private String jwtRestService;
     @Value("${authentication-rest-service.root}${authentication-rest-service.delete}")
     private String deleteAuthentication;
 
-    @Value("${email-rest-service}")
+    @Value("${email-rest-service.root}${email-rest-service.emails}")
     private String emailEp;
 
     @Value("${emailFrom}")
@@ -57,7 +51,7 @@ public class UserAccountService implements UserAccount {
     @Value("${emailBody}")
     private String emailBody;
 
-    @Value("${account-activate-link}")
+    @Value("${account-rest-service.root}${account-rest-service.activate}")
     private String accountActivateLink;
 
     @Value("${secretExpire}")
@@ -382,33 +376,6 @@ public class UserAccountService implements UserAccount {
                 });
     }
 
-    private Mono<String> oldgetJwt() {
-        final String jsonString = "{\n" +
-                "  \"sub\": \"account\",\n" +
-                "  \"scope\": \"account\",\n" +
-                "  \"clientId\": \"account-rest-service\",\n" +
-                "  \"aud\": \"service\",\n" +
-                "  \"role\": \"service\",\n" +
-                "  \"groups\": \"service\",\n" +
-                "  \"expiresInSeconds\": 300\n" +
-                "}\n";
-
-        final String hmac = Util.getHmac(hmacClient.getMd5Algoirthm(), jsonString, hmacClient.getSecretKey());
-        LOG.info("creating hmac for jwt-rest-service: {}", jwtRestService);
-        WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtRestService)
-                .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
-                .bodyValue(jsonString)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve();
-        return responseSpec.bodyToMono(Map.class).map(map -> {
-            LOG.info("got jwt token: {}", map.get("token"));
-            return map.get("token").toString();
-        }).onErrorResume(throwable -> {
-            LOG.error("jwt call failed", throwable);
-            return  Mono.error(new AccountException("Email failed: "+ throwable.getMessage()));
-        });
-    }
-
     /**
      * method to generate random length of text
      * @param n
@@ -417,7 +384,6 @@ public class UserAccountService implements UserAccount {
     public Mono<String> generateRandomText(int n)
     {
         LOG.info("generate random text");
-
 
         // chose a Character random from this String
         String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
