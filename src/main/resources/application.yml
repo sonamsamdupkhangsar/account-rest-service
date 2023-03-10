@@ -18,6 +18,8 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: account-rest-service
   r2dbc:
     url: r2dbc:postgresql://${POSTGRES_SERVICE}/${POSTGRES_DBNAME}
     username: ${POSTGRES_USERNAME}
