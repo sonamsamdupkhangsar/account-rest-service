@@ -10,7 +10,7 @@ RUN --mount=type=secret,id=PERSONAL_ACCESS_TOKEN \
    export PERSONAL_ACCESS_TOKEN=$(cat /run/secrets/PERSONAL_ACCESS_TOKEN) && \
    mvn -s settings.xml clean install
 
-FROM openjdk:16
+FROM openjdk:17
 WORKDIR /app
 COPY --from=build /app/target/account-rest-service-1.0-SNAPSHOT.jar /app/account-rest-service.jar
 EXPOSE 8080
