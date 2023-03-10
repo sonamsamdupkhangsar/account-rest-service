@@ -50,9 +50,9 @@ account-rest-service:
   activate: /accounts/activate
 
 hmacKey:
-  clientId: ${hmacKey.clientId}
-  algorithm: ${hmacKey.algorithm}
-  secretKey: ${hmacKey.secretKey}
+  clientId: ${HMAC_CLIENTID}
+  algorithm: ${HMAC_ALGORITHM}
+  secretKey: ${HMAC_SECRET}
 
 emailFrom: ${EMAIL_FROM}
 account-activate-link: ${ACCOUNT_ACTIVATE_LINK}
