@@ -22,3 +22,5 @@ hmacKey:
   clientId: account-rest-service
   algorithm: HmacMD5
   secretKey: mysecret
+
+EMAIL_FROM: ${EMAIL_FROM}

@@ -115,11 +115,13 @@ secretFiles:
         name: EUREKA_USER
       - key: password
         name: EUREKA_PASSWORD
-  - file: authentication-rest-service
+  - file: account-rest-service
     keys:
       - key: hmac.clientId
-        name: hmackey.clientId
+        name: HMAC_CLIENTID
       - key: hmac.algorithm
-        name: hmackey.hmacMD5Algorithm
+        name: HMAC_ALGORITHM
       - key: hmac.secret
-        name: hmackey.secretKey
+        name: HMAC_SECRET
+      - key: email.from
+        name: EMAIL_FROM
