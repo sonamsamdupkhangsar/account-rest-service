@@ -92,7 +92,6 @@ envs:
   - name: ACCOUNT_REST_SERVICE
     value: https://account-rest-service.backend.svc.cluster.local:80
 
-
 health:
   liveness:
     path: /api/health/liveness
@@ -106,7 +105,6 @@ health:
     initialDelaySeconds: 60
     periodSeconds: 5
     failureThreshold: 5
-
 
 secretFiles:
   - file: eureka-discovery
