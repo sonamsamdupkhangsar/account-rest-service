@@ -1,0 +1,232 @@
+openapi: "3.0.2"
+info:
+  title: Account rest service api.
+  version: "1.0"
+
+servers:
+  - url: http://localhost:8086
+
+paths:
+  /accounts/active/authenticationId/{authenticationId}:
+    description: This endpoint will check if the account with this authenticationId is active,
+      returns boolean true or false.
+    get:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User is either active (true) or not active (false)
+          content:
+            application:/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: boolean
+        '400':
+          description: Failed to find a account with this authenticationId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /accounts/activate/{authenticationId}/{secret}:
+    description: This will activate account for authenticationId with matching secret
+    get:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: secret
+          in: path
+          required: true
+          schema:
+            type: string
+            format: password
+      responses:
+        '200':
+          description: The account is successfully activated.
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: "Failed to activate account, reasons could be because account is already active, secret
+                  has expired, or failed to call external services like authentication, and user rest services."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+  /accounts/emailactivationlink/{authenticationId}:
+    description: This will send user a email containing user activation link.
+    put:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email successfully sent containing user activation link;
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: Failed to send email with user activation link because account is already active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+  /accounts/emailmysecret/{authenticationId}:
+    description: This will send user a email containing a secret for password reset function.
+    put:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email successfully sent containing a secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: Failed to send email with secret, reasons could be because account with this authenticationId is not active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+  /accounts/{authenticationId}/{email}:
+    description: This will create an account using the authenticationId and email.
+    post:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The account is successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: "Failed to create account, reasons could be because a user with this email already exists 
+                      or an account already exists with this authenticationId that is active."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+  /accounts/email/authenticationId/{email}:
+    description: This will send the user its authenticationId based on the email.
+    put:
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Successfully sent authenticationId by email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: Failed to send authenticationId by email becasue it does not exist or account is not active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+
+  /accounts/validate/secret/{authenticationId}/{secret}:
+    description: This will validate emailed login secret.
+    post:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: secret
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The authenticationId and secret matches successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: Failed to match authenticationId and secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+  /accounts/email/{email}:
+    description: "This will delete account associated with this email.  This first verifies the account is not active.  This will delete the user by 
+    calling user-rest-service, then delete authentication by calling authentication-rest-service."
+    delete:
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: The account is successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponseBody'
+        '400':
+          description: Failed to delete account, reasons could be because account active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadResponseBody'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    OkResponseBody:
+      type: object
+      properties:
+        message:
+          type: string
+    BadResponseBody:
+      type: object
+      properties:
+        error:
+          type: string

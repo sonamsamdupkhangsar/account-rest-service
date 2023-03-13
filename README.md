@@ -4,16 +4,28 @@ This is a Account Rest Service api built using Spring WebFlux.
 This is a reactive Java webservice api.
 
 
-## Run locally
+## Run locally using profile
+Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
+
 
 ```
-mvn spring-boot:run  -Dspring-boot.run.arguments="--POSTGRES_USERNAME=dummy \
-                      --POSTGRES_PASSWORD=dummy \
-                      --POSTGRES_DBNAME=account \
-                      --POSTGRES_SERVICE=localhost:5432"
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
 ```
- 
- 
+
+Or you can do something like following too:
+
+```
+mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8086 --jwt.issuer=sonam.us \
+    --POSTGRES_USERNAME=test \
+    --POSTGRES_PASSWORD=test \
+    --POSTGRES_DBNAME=account2 \
+    --POSTGRES_SERVICE=localhost:5432
+    --DB_SSLMODE=disable
+    --eureka.client.enabled=false"                      
+```
+
+
+
 ## Build Docker image
 
 Build docker image using included Dockerfile.
@@ -56,33 +68,139 @@ psql -U <USER> -d projectdb -h localhost -p 6432
 
 ```
 
+## User Account Workflow
+endpoints: 
+1. Create account
+2. Activate account
+3. Email activation link
+4. Password reset 
+5. Account active check
+6. Get authenticationId
+7. Validate Emailed Login Secret
+8. Delete account associated with email
 
-### Account Activation workflow (Mermaidjs)
+
+## Account active check workflow
 ```mermaid
 flowchart TD
-    User[user] --"click on account activation url link" -->  AccountRestService[account-rest-service] 
-    AccountRestService --> authIdValid{authenticationId valid}
-    authIdValid --"check account repository"--> AccountPgsqlDb[(account postgresqldb)]
-   authIdValid -->|Yes| secretValid{"secred not expired and
-    matches in passwordSecretRepository"}
-   authIdValid -->|No| error400{return Http 400 error}
-   secretValid --"check passwordSecret repository" -->AccountPgsqlDb
-   secretValid -->|Yes| activateAccount[activate account]
-   activateAccount --"save account activated" --> AccountPgsqlDb
-   AccountPgsqlDb --> accountActivated["Account activated"]
-   secretValid -->|No| error400    
-   accountActivated -.-> authentication-rest-service
-   
-   accountActivated -.-> user-rest-service
-    
-    subgraph authentication-rest-service-subgraph
-    authentication-rest-service["/authentications/activate/{authenticationId}"]
-    end
-    
-    subgraph user-rest-service-subgraph
-    user-rest-service["/user/activate/{authenticationId}"]
-    end    
+  User[user request] --> account-rest-service["account-rest-service"]
+  account-rest-service --"account active?" --> accountRepository[(account db)]
+```
+
+## ActivateAccount
+```mermaid
+flowchart TD
+  User --> account-rest-service
+  account-rest-service --> activateAccount["activate account"]  
+  activateAccount --> authenticationIdUnique{authenticationId unique?}
+  
+  authenticationIdUnique --> accountDb[(account postgresdb)]
+  
+  authenticationIdUnique --> |Yes| passwordSecretCheck[Check PasswordSecret]
+  authenticationIdUnique --> |No| ReturnError[Return 400 error to request]
+  
+  passwordSecretCheck --> passwordSecretValid{PasswordSecretExists and Valid?}
+  
+  passwordSecretValid --> accountDb
+  passwordSecretValid -->|Yes| setAccountActive   
+  setAccountActive --> accountDb
+  setAccountActive --"activate authentication"--> activateAuthentication[authentication-rest-service] 
+  passwordSecretValid -->|No| ReturnError
+  activateAuthentication --"activate user"--> activateUser["user-rest-service"] 
+```  
+  
+## Email activation link
+```mermaid
+flowchart TD
+  User --"user requests to get a email activation link"--> account-rest-service
+  account-rest-service --> validateAuthenticationIdExists["AuthenticationIdExists?"]
+  validateAuthenticationIdExists --> accountDb[(account postgresdb)]
+  validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
+  deleteAnySecretPassword --> accountDb
+  validateAuthenticationIdExists -->|No| ReturnError[Return 400 error to request]
+  deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
+  createNewSecretPassword --> accountDb
+  createNewSecretPassword --> emailActivationLink["email activation link"]
+  emailActivationLink --> email-rest-service                  
+```
+
+## Email User secret
+```mermaid
+flowchart TD
+  User --"user requests for a secret by email for password reset function"--> account-rest-service
+  account-rest-service --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+  validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
+  validateAuthenticationIdExistsAndTrue -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
+  deleteAnySecretPassword --> accountDb
+  validateAuthenticationIdExistsAndTrue -->|No| ReturnError[Return 400 error to request]
+  deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
+  createNewSecretPassword --> accountDb
+  createNewSecretPassword --> emailSecret["email secret"]
+  emailSecret --> email-rest-service                  
 ```
 
 
+## Create account
+```mermaid
+flowchart TD
+  User --"Create account"--> account-rest-service
+  account-rest-service --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+  validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
+  validateAuthenticationIdExistsAndTrue -->|Yes| returnError[Return 400 error to request]  
+  validateAuthenticationIdExistsAndTrue -->|No| existsByEmail{email already used?}
+  existsByEmail -->|Yes| returnError
+  existsByEmail -->|No| deleteAuthenticationIdActiveFalse["delete previous Authentication"]
+  deleteAuthenticationIdActiveFalse --> save["create Authentication"]
+  save --> accountDb
+  save --> createPasswordSecret
+  createPasswordSecret --> accountDb
+  createPasswordSecret --> emailActivationLink["email activation link"]
+  emailActivationLink --> email-rest-service
+```
 
+
+## Send authenticationId by email
+```mermaid
+flowchart TD
+  User --"user requests to get authenticationId, maybe they forgot?"--> account-rest-service
+  account-rest-service --> findByEmail{Account exists by email?}
+  findByEmail --> accountDb[(account postgresdb)]
+  findByEmail -->|Yes| accountIsActive{is account active?}  
+  findByEmail -->|No| returnError[Return 400 error to request]
+  accountIsActive -->|Yes| emailAuthenticationId[email authenticationid]
+  emailAuthenticationId --> email-rest-service
+  accountIsActive -->|No| returnError                  
+```
+
+## Validate email login secret
+```mermaid
+flowchart TD
+  User --"validate email login secret"--> account-rest-service
+  account-rest-service --> findByAuthenticationId["find by authenticationId"]
+  findByAuthenticationId --> validatePasswordSecretMatches{DoespasswordSecret match?}
+  validatePasswordSecretMatches --> accountDb[(accountDb postgresql)]
+  validatePasswordSecretMatches -->|Yes, passwordSecret exists and matches| returnHttp200["return passwordsecret matches"]
+  validatePasswordSecretMatches -->|No| returnError["Secret has expired or does not match"]           
+```
+
+## Delete account by email
+```mermaid
+flowchart TD
+  User --"delete account by email"--> account-rest-service
+  account-rest-service --> accountWithEmailExists{account with email exists?}
+  accountWithEmailExists -->|No| returnError[Return 400 error to request]
+  accountWithEmailExists -->|Yes| passwordSecretExists{passwordSecret Exists?}
+  passwordSecretExists -->|Yes| passwordSecretExpired{passwordSecret has expired?}
+  passwordSecretExists -->|No| returnError
+  passwordSecretExpired -->|No| returnError
+  passwordSecretExpired -->|Yes| accountActiveWithAuthenticationIdAndActive{is account active?}
+  accountActiveWithAuthenticationIdAndActive -->|Yes| returnError
+  accountActiveWithAuthenticationIdAndActive -->|No| deleteUser[request to delete user]
+  deleteUser --> user-rest-service
+  user-rest-service --> deleteAuthentication[delete authentication]
+  deleteAuthentication --> authentication-rest-service
+  authentication-rest-service --> deleteAccount[delete account]
+  deleteAccount --> accountDb[(accountDb postgresql)]           
+```
+
+If Account is not getting activated, try resend email activation link

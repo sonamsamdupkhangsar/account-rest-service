@@ -5,6 +5,8 @@ import me.sonam.account.repo.AccountRepository;
 import me.sonam.account.repo.PasswordSecretRepository;
 import me.sonam.account.repo.entity.Account;
 import me.sonam.account.repo.entity.PasswordSecret;
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.security.util.HmacClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 @Service
 public class UserAccountService implements UserAccount {
@@ -26,21 +29,20 @@ public class UserAccountService implements UserAccount {
     private WebClient webClient;
 
     @Value("${user-rest-service.root}${user-rest-service.activate}")
-    //@Value("${activate-user-rest-service}")
     private String activateUser;
 
     @Value("${user-rest-service.root}${user-rest-service.delete}")
-    //@Value("${activate-user-rest-service}")
     private String deleteUser;
 
-//    @Value("${activate-authentication-rest-service}")
     @Value("${authentication-rest-service.root}${authentication-rest-service.activate}")
     private String activateAuthentication;
 
+    @Value("${jwt-service.root}${jwt-service.accesstoken}")
+    private String jwtRestService;
     @Value("${authentication-rest-service.root}${authentication-rest-service.delete}")
     private String deleteAuthentication;
 
-    @Value("${email-rest-service}")
+    @Value("${email-rest-service.root}${email-rest-service.emails}")
     private String emailEp;
 
     @Value("${emailFrom}")
@@ -49,11 +51,14 @@ public class UserAccountService implements UserAccount {
     @Value("${emailBody}")
     private String emailBody;
 
-    @Value("${account-activate-link}")
+    @Value("${account-rest-service.root}${account-rest-service.activate}")
     private String accountActivateLink;
 
     @Value("${secretExpire}")
     private int secretExpiresInHour;
+
+    @Autowired
+    private HmacClient hmacClient;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -61,9 +66,12 @@ public class UserAccountService implements UserAccount {
     @Autowired
     private PasswordSecretRepository passwordSecretRepository;
 
+    @Autowired
+    private ReactiveRequestContextHolder reactiveRequestContextHolder;
+
     @PostConstruct
     public void setWebClient() {
-        webClient = WebClient.builder().build();
+        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
     }
 
     @Override
@@ -107,6 +115,7 @@ public class UserAccountService implements UserAccount {
                         account.setActive(true);
                         account.setAccessDateTime(LocalDateTime.now());
                         account.setNewAccount(false);
+                        LOG.info("set account to active if not");
                         LOG.info("set account to active if not");
                     }
                     else {
@@ -154,15 +163,15 @@ public class UserAccountService implements UserAccount {
 
         String authId = serverRequest.pathVariable("authenticationId");
 
-        return accountRepository.existsByAuthenticationIdAndActiveTrue(authId).
-                filter(aBoolean -> {
+        return accountRepository.existsByAuthenticationIdAndActiveTrue(authId)
+              /*  .filter(aBoolean -> {
                     LOG.info("aBoolean existsByUserIdAndActiveTrue: {}", aBoolean);
                     if (aBoolean == true) {
                         return false;
                     }
                     return true;
-                } )
-                .switchIfEmpty(Mono.error(new AccountException("Account already exists and is active")))
+                } ) // check if a link was already sent, if it was then return indicating a link has already been sent
+                .switchIfEmpty(Mono.error(new AccountException("Account already exists and is active")))*/
                 .doOnNext(aBoolean -> {
                     LOG.info("delete from passwordSecret repo if there is any: {}", authId);
                     passwordSecretRepository.deleteById(authId).subscribe(unused -> LOG.info("delete existing password secret"));
@@ -184,7 +193,8 @@ public class UserAccountService implements UserAccount {
                 .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(authId)
                         .switchIfEmpty(Mono.error(new AccountException("no account with email")))
                         .zipWith(Mono.just(stringBuilder)))
-                .flatMap(objects -> email(objects.getT1().getEmail(), "Activation link", objects.getT2().toString()));
+                .flatMap(objects -> email(objects.getT1().getEmail(), "Activation link", objects.getT2().toString()))
+                .thenReturn("Email activation link has been sent");
     }
 
     @Override
@@ -214,7 +224,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(authenticationId)
                         .switchIfEmpty(Mono.error(new AccountException("no account with email")))
                         .zipWith(Mono.just(stringBuilder)))
-                .flatMap(objects -> email(objects.getT1().getEmail(), "Your requested information", objects.getT2().toString()));
+                .flatMap(objects -> email(objects.getT1().getEmail(),"Your requested information", objects.getT2().toString()));
     }
 
     /**
@@ -232,11 +242,11 @@ public class UserAccountService implements UserAccount {
 
         return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId).filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("Account is already active with authenticationId")))
-                .flatMap(aBoolean -> accountRepository.existsByEmail(email))
-                .filter(aBoolean -> !aBoolean)
-                .switchIfEmpty(Mono.error(new AccountException("a user with this email already exists")))
                 //delete any previous attempts that is not activated
                 .flatMap(aBoolean -> accountRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
+                .flatMap(integer -> accountRepository.existsByEmail(email))
+                .filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new AccountException("a user with this email already exists")))
                 .flatMap(integer -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
                 .flatMap(account -> accountRepository.save(account))
                 .flatMap(account -> {
@@ -257,7 +267,8 @@ public class UserAccountService implements UserAccount {
                         .append(accountActivateLink).append("/").append(authenticationId)
                         .append("/").append(passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
-                .flatMap(stringBuilder -> email(email, "Activation link", stringBuilder.toString()));
+                .flatMap(stringBuilder -> email(email,"Activation link", stringBuilder.toString()))
+                .then(Mono.just("Account created successfully.  Check email for activating account"));
     }
 
     @Override
@@ -274,7 +285,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(account -> Mono.just(new StringBuilder("Your reuqested login id "+ account.getAuthenticationId())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                         .zipWith(accountMono))
-                .flatMap(objects -> email(objects.getT2().getEmail(), "Your requested information", objects.getT1().toString()));
+                .flatMap(objects -> email(objects.getT2().getEmail(),"Your requested information", objects.getT1().toString()));
     }
 
     //authId/passwordsecret
@@ -349,20 +360,20 @@ public class UserAccountService implements UserAccount {
                             .thenReturn("deleted authenticationId that is active false");
                 }));
     }
-
     private Mono<String> email(String emailTo, String subject, String messageBody) {
         LOG.info("sending email to {}, subject: {}, body: {}", emailEp, subject, messageBody);
 
-        Email email = new Email(emailFrom, emailTo, subject, messageBody);
-        WebClient.ResponseSpec spec = webClient.post().uri(emailEp).bodyValue(email).retrieve();
-
-        return spec.bodyToMono(String.class).flatMap(myemail-> {
-            LOG.info("email response is: {}", myemail);
-            return Mono.just("email sent");
-        }).onErrorResume(throwable -> {
-            LOG.error("email failed", throwable);
-          return  Mono.error(new AccountException("Email failed: "+ throwable.getMessage()));
-        });
+        return webClient.post().uri(emailEp)
+                .bodyValue(new Email(emailFrom, emailTo, subject, messageBody))
+                .retrieve()
+                .bodyToMono(Map.class)
+                .flatMap(map-> {
+                    LOG.info("email response is: {}", map);
+                    return Mono.just(map.get("message").toString());
+                }).onErrorResume(throwable -> {
+                    LOG.error("email failed", throwable.getMessage());
+                    return  Mono.error(new AccountException("Email failed: "+ throwable.getMessage()));
+                });
     }
 
     /**
@@ -373,7 +384,6 @@ public class UserAccountService implements UserAccount {
     public Mono<String> generateRandomText(int n)
     {
         LOG.info("generate random text");
-
 
         // chose a Character random from this String
         String alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

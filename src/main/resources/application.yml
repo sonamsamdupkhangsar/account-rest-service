@@ -18,28 +18,85 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: account-rest-service
   r2dbc:
     url: r2dbc:postgresql://${POSTGRES_SERVICE}/${POSTGRES_DBNAME}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     properties:
-      sslMode: REQUIRE
+      sslMode: ${DB_SSLMODE}
 
 
 user-rest-service:
-    root: http://user-rest-service-mychart.backend.svc.cluster.local:80
-    activate: /user/activate/
-    delete: /user/
+    root: ${USER_REST_SERVICE}
+    activate: /users/activate/
+    delete: /users/
 
 authentication-rest-service:
-  root: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+  root: ${AUTHENTICATION_REST_SERVICE}
   activate: /authentications/activate/
   delete: /authentications/
 
-#activate-user-rest-service: http://user-rest-service-mychart.backend.svc.cluster.local:80/user/activate/
-#activate-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications/activate/
-email-rest-service: http://email-rest-service-mychart.backend.svc.cluster.local:80/email
-emailFrom: "kecha@sonam.email"
-account-activate-link: https://account-rest-service.sonam.cloud/public/accounts/activate
+jwt-service:
+  root: ${JWT_REST_SERVICE}
+  public-key-id: /jwts/publickeys/{keyId}
+  accesstoken: /jwts/accesstoken
+
+email-rest-service:
+  root: ${EMAIL_REST_SERVICE}
+  emails: /emails
+
+account-rest-service:
+  root: ${ACCOUNT_REST_SERVICE}
+  activate: /accounts/activate
+
+hmacKey:
+  clientId: ${HMAC_CLIENTID}
+  algorithm: ${HMAC_ALGORITHM}
+  secretKey: ${HMAC_SECRET}
+
+emailFrom: ${EMAIL_FROM}
+account-activate-link: ${ACCOUNT_ACTIVATE_LINK}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
+
+permitpath:
+  - path: /api/health/*
+  - path: /accounts/active/*/*
+    httpMethods: GET
+  - path: /accounts/activate/*/*
+    httpMethods: GET
+  - path: /accounts/emailactivationlink/*
+    httpMethods: PUT
+  - path: /accounts/emailmysecret/*
+    httpMethods: PUT
+  - path: /accounts/*/*
+    httpMethods: POST
+  - path: /accounts/email/authenticationId/*
+    httpMethods: PUT
+  - path: /accounts/validate/secret/*/*
+    httpMethods: PUT
+
+# request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
+jwtrequest:
+  - in:  /accounts/emailactivationlink/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/emailmysecret/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/email/authenticationId/(.)*
+    out: /emails
+    jwt: request
+  - in: /accounts/(.)*/(.)*
+    out: /emails
+    jwt: forward
+  - in: /accounts/activate/(.)*/(.)*
+    out: /users/activate/(.)*
+    jwt: request
