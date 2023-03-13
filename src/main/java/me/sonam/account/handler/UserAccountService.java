@@ -142,7 +142,7 @@ public class UserAccountService implements UserAccount {
                 })
                 .flatMap(account -> {
                     StringBuilder stringBuilder = new StringBuilder(activateUser).append(authenticationId);
-                    LOG.info("send activate webrequest to user-rest-service: {}", stringBuilder.toString());
+                    LOG.info("send activate webrequest to user-rest-service: {}", stringBuilder);
                     WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
 
                     return spec.bodyToMono(String.class).flatMap(s -> {
