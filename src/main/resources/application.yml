@@ -64,7 +64,7 @@ secretExpire: 2
 eureka:
   client:
     serviceUrl:
-      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
+      defaultZone: ${DEFAULT_ZONE}
 
 permitpath:
   - path: /api/health/*
@@ -82,6 +82,7 @@ permitpath:
     httpMethods: PUT
   - path: /accounts/validate/secret/*/*
     httpMethods: PUT
+  - path: /actuator/info
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
 jwtrequest:
