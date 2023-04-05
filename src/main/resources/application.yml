@@ -57,7 +57,6 @@ hmacKey:
   secretKey: ${HMAC_SECRET}
 
 emailFrom: ${EMAIL_FROM}
-account-activate-link: ${ACCOUNT_ACTIVATE_LINK}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
 

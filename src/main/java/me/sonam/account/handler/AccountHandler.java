@@ -112,7 +112,7 @@ public class AccountHandler implements Handler {
         return userAccount.delete(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("deleted failed", e);
+                    LOG.warn("deleted failed", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }

@@ -26,8 +26,6 @@ import java.util.Map;
 public class UserAccountService implements UserAccount {
     private static final Logger LOG = LoggerFactory.getLogger(UserAccountService.class);
 
-    private WebClient webClient;
-
     @Value("${user-rest-service.root}${user-rest-service.activate}")
     private String activateUser;
 
@@ -67,11 +65,13 @@ public class UserAccountService implements UserAccount {
     private PasswordSecretRepository passwordSecretRepository;
 
     @Autowired
+    private WebClient.Builder webClientBuilder;
+    @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
 
     @PostConstruct
     public void setWebClient() {
-        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
+        webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
     }
 
     @Override
@@ -129,7 +129,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(account -> {
                     StringBuilder stringBuilder = new StringBuilder(activateAuthentication).append(authenticationId);
                     LOG.info("send activate webrequest to authentication-rest-service: {}", stringBuilder.toString());
-                    WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
+                    WebClient.ResponseSpec spec = webClientBuilder.build().put().uri(stringBuilder.toString()).retrieve();
 
                     return spec.bodyToMono(String.class).flatMap(s -> {
                         LOG.info("activation response from authentication-rest-service is: {}", s);
@@ -143,7 +143,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(account -> {
                     StringBuilder stringBuilder = new StringBuilder(activateUser).append(authenticationId);
                     LOG.info("send activate webrequest to user-rest-service: {}", stringBuilder);
-                    WebClient.ResponseSpec spec = webClient.put().uri(stringBuilder.toString()).retrieve();
+                    WebClient.ResponseSpec spec = webClientBuilder.build().put().uri(stringBuilder.toString()).retrieve();
 
                     return spec.bodyToMono(String.class).flatMap(s -> {
                         LOG.info("activation response from user-rest-service is: {}", s);
@@ -333,7 +333,7 @@ public class UserAccountService implements UserAccount {
                                     StringBuilder stringBuilder = new StringBuilder(deleteUser).append(authenticationId);
                                     LOG.info("delete user with endpoint: {}", stringBuilder.toString());
 
-                                    return webClient.delete().uri(stringBuilder.toString()).retrieve().bodyToMono(String.class)
+                                    return webClientBuilder.build().delete().uri(stringBuilder.toString()).retrieve().bodyToMono(String.class)
                                             .doOnNext(s -> {
                                                 LOG.info("deleted user with authenticationId: {}, rest response is {}", authenticationId, s);
                                             }).onErrorResume(throwable -> {
@@ -346,7 +346,7 @@ public class UserAccountService implements UserAccount {
                     StringBuilder stringBuilder = new StringBuilder(deleteAuthentication).append(authenticationId);
                     LOG.info("delete authentication with endpoint: {}", stringBuilder.toString());
 
-                    return webClient.delete().uri(stringBuilder.toString()).retrieve().bodyToMono(String.class)
+                    return webClientBuilder.build().delete().uri(stringBuilder.toString()).retrieve().bodyToMono(String.class)
                             .doOnNext(s2 -> {
                                 LOG.info("deleted authentication with authenticationId: {}, rest response is {}", authenticationId, s2);
                             }).onErrorResume(throwable -> {
@@ -363,7 +363,7 @@ public class UserAccountService implements UserAccount {
     private Mono<String> email(String emailTo, String subject, String messageBody) {
         LOG.info("sending email to {}, subject: {}, body: {}", emailEp, subject, messageBody);
 
-        return webClient.post().uri(emailEp)
+        return webClientBuilder.build().post().uri(emailEp)
                 .bodyValue(new Email(emailFrom, emailTo, subject, messageBody))
                 .retrieve()
                 .bodyToMono(Map.class)
