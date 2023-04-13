@@ -44,7 +44,7 @@ public class AccountHandler implements Handler {
         return userAccount.activateAccount(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("activate account failed", e);
+                    LOG.error("activate account failed: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }
@@ -55,7 +55,7 @@ public class AccountHandler implements Handler {
         return userAccount.emailActivationLink(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("email activation link failed", e);
+                    LOG.error("email activation link failed, error: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }
@@ -78,7 +78,7 @@ public class AccountHandler implements Handler {
         return userAccount.emailMySecret(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("emailMySecred failed", e);
+                    LOG.error("emailMySecret failed, error: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }
@@ -89,7 +89,7 @@ public class AccountHandler implements Handler {
         return userAccount.sendAuthenticationId(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("sengLoginId failed", e);
+                    LOG.error("sengLoginId failed, error: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }
@@ -100,7 +100,7 @@ public class AccountHandler implements Handler {
         return userAccount.validateEmailLoginSecret(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.error("validateEmailLoginSecret failed", e);
+                    LOG.error("validateEmailLoginSecret failed, error: ", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }
@@ -112,7 +112,7 @@ public class AccountHandler implements Handler {
         return userAccount.delete(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
-                    LOG.warn("deleted failed", e.getMessage());
+                    LOG.warn("deleted failed, error: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
                 });
     }

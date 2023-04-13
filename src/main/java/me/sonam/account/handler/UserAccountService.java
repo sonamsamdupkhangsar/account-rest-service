@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
 
@@ -135,9 +136,17 @@ public class UserAccountService implements UserAccount {
                         LOG.info("activation response from authentication-rest-service is: {}", s);
                         return Mono.just(s);
                     }).onErrorResume(throwable -> {
-                        LOG.error("error on authentication rest service call {}", throwable);
-                       return Mono.error(new AccountException("Authentication activation call failed: " + throwable.getMessage()));
+                        StringBuilder errorMessage = new StringBuilder("error on authentication rest service call");
 
+                        if (throwable instanceof WebClientResponseException) {
+                            WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                            LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                            errorMessage = errorMessage.append(", error: ").append(webClientResponseException.getResponseBodyAsString());
+                        }
+                        else {
+                            errorMessage.append("error: ").append(throwable.getMessage());
+                        }
+                        return Mono.error(new AccountException(errorMessage.toString()));
                     });
                 })
                 .flatMap(account -> {
@@ -149,8 +158,18 @@ public class UserAccountService implements UserAccount {
                         LOG.info("activation response from user-rest-service is: {}", s);
                         return Mono.just(s);
                     }).onErrorResume(throwable -> {
-                        LOG.error("error on user rest service call {}", throwable);
-                        return Mono.error(new AccountException("user activation failed: " + throwable.getMessage()));
+                        StringBuilder errorMessage = new StringBuilder("error on activate user rest service call");
+
+                        if (throwable instanceof WebClientResponseException) {
+                            WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                            LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                            errorMessage.append(", error: ").append(webClientResponseException.getResponseBodyAsString());
+                        }
+                        else {
+                            errorMessage.append("error: ").append(throwable.getMessage());
+                        }
+                        LOG.error("error on user rest service call {}", errorMessage);
+                        return Mono.error(new AccountException(errorMessage.toString()));
 
                     });
                 })
