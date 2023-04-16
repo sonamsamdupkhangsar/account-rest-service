@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -23,7 +22,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-@Service
 public class UserAccountService implements UserAccount {
     private static final Logger LOG = LoggerFactory.getLogger(UserAccountService.class);
 
@@ -65,10 +63,14 @@ public class UserAccountService implements UserAccount {
     @Autowired
     private PasswordSecretRepository passwordSecretRepository;
 
-    @Autowired
     private WebClient.Builder webClientBuilder;
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
+
+
+    public UserAccountService(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
 
     @PostConstruct
     public void setWebClient() {

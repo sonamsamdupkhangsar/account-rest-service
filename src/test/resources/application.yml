@@ -64,7 +64,7 @@ eureka:
     enabled: false
 
 permitpath:
-  - path: /api/health/*
+  - path: /accounts/api/health/*
   - path: /accounts/active/*/*
     httpMethods: GET
   - path: /accounts/activate/*/*
