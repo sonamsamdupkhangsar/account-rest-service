@@ -37,6 +37,7 @@ authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
   activate: /authentications/activate/
   delete: /authentications/
+  update-no-auth-password: /authentications/noauth/password
 
 jwt-service:
   root: ${JWT_REST_SERVICE}
@@ -57,7 +58,6 @@ hmacKey:
   secretKey: ${HMAC_SECRET}
 
 emailFrom: ${EMAIL_FROM}
-account-activate-link: ${ACCOUNT_ACTIVATE_LINK}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
 
@@ -67,7 +67,7 @@ eureka:
       defaultZone: ${DEFAULT_ZONE}
 
 permitpath:
-  - path: /api/health/*
+  - path: /accounts/api/health/*
   - path: /accounts/active/*/*
     httpMethods: GET
   - path: /accounts/activate/*/*
@@ -83,6 +83,8 @@ permitpath:
   - path: /accounts/validate/secret/*/*
     httpMethods: PUT
   - path: /actuator/info
+  - path: /accounts/authentications/password
+    httpMethods: PUT
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
 jwtrequest:

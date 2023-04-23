@@ -19,6 +19,8 @@ server:
   port: 9001
 
 spring:
+  profiles:
+    active: localdevtest
   r2dbc:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa
@@ -38,6 +40,7 @@ authentication-rest-service:
   root: http://localhost:{port}
   activate: /authentications/activate/
   delete: /authentications/
+  update-no-auth-password: /authentications/noauth/password
 
 jwt-service:
   root: http://localhost:{port}
@@ -62,7 +65,7 @@ eureka:
     enabled: false
 
 permitpath:
-  - path: /api/health/*
+  - path: /accounts/api/health/*
   - path: /accounts/active/*/*
     httpMethods: GET
   - path: /accounts/activate/*/*
@@ -76,6 +79,8 @@ permitpath:
   - path: /accounts/email/authenticationId/*
     httpMethods: PUT
   - path: /accounts/validate/secret/*/*
+    httpMethods: PUT
+  - path: /accounts/authentications/password
     httpMethods: PUT
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)

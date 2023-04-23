@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static me.sonam.account.handler.AccountHandler.getMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -126,6 +128,67 @@ public class AccountRestServiceTest {
 
     }
 
+    /**
+     * this will test the account authentication password for an un-logged in user
+     */
+    @Test
+    public void accountAuthenticationPasswordUpdate() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "activateAccounttest";
+
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", true, LocalDateTime.now());
+        accountRepository.save(account)
+                .subscribe(account1 -> LOG.info("Saved account in faltruese active state"));
+
+        PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
+        passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
+
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("{\"message\":\"password updated\"}"));
+
+        Map<String, String> map = getMap(Pair.of("authenticationId", authenticationId),
+                Pair.of("secret", "mysecret"), Pair.of("password", "newPassword"));
+
+        LOG.info("update account authentication password");
+        EntityExchangeResult<Map> result = client.put().uri("/accounts/authentications/password")
+                .bodyValue(map)
+                .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
+
+        LOG.info("response from accounts/authentications/password update: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("message")).isEqualTo("password updated");
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("PUT");
+        assertThat(request.getPath()).isEqualTo("/authentications/noauth/password");
+    }
+
+    /**
+     * this will test when user is not active but attempting to update authentication user password
+     * @throws InterruptedException
+     */
+    @Test
+    public void accountAuthenticationPasswordUpdateAccountNotActive() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "activateAccounttest";
+
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        accountRepository.save(account)
+                .subscribe(account1 -> LOG.info("Saved account in false active state"));
+
+        PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
+        passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
+
+        Map<String, String> map = getMap(Pair.of("authenticationId", authenticationId),
+                Pair.of("secret", "mysecret"), Pair.of("password", "newPassword"));
+
+        LOG.info("update account authentication password");
+        EntityExchangeResult<Map> result = client.put().uri("/accounts/authentications/password")
+                .bodyValue(map)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        LOG.info("response from accounts/authentications/password update: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("error")).isEqualTo("account is not active or does not exist");
+    }
     @Test
     public void activateAccount() throws InterruptedException {
         UUID id = UUID.randomUUID();

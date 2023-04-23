@@ -35,4 +35,6 @@ class R2DBCConfiguration extends AbstractR2dbcConfiguration {
         return ConnectionFactories.get("r2dbc:h2:mem:///testdb?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
 
     }
+
+
 }

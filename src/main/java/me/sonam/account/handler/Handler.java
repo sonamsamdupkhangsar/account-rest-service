@@ -20,4 +20,5 @@ public interface Handler {
     Mono<ServerResponse> sendLoginId(ServerRequest serverRequest);
     Mono<ServerResponse> validateEmailLoginSecret(ServerRequest serverRequest);
     Mono<ServerResponse> delete(ServerRequest serverRequest);
+    Mono<ServerResponse> updateAuthenticationPassword(ServerRequest serverRequest);
 }

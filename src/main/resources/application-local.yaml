@@ -18,11 +18,12 @@ eureka:
 
 DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
-USER_REST_SERVICE: http://localhost:8084
-AUTHENTICATION_REST_SERVICE: http://localhost:8083
-EMAIL_REST_SERVICE: http://localhost:8085
-ACCOUNT_REST_SERVICE: http://localhost:8086
-JWT_REST_SERVICE: http://localhost:8081
+USER_REST_SERVICE: http://user-rest-service
+AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
+EMAIL_REST_SERVICE: http://email-rest-service
+# go through gateway for account-rest-service
+ACCOUNT_REST_SERVICE: http://localhost:8080
+JWT_REST_SERVICE: http://jwt-rest-service
 
 hmacKey:
   clientId: account-rest-service
