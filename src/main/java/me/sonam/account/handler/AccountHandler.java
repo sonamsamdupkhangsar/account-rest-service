@@ -30,7 +30,7 @@ public class AccountHandler implements Handler {
     public Mono<ServerResponse> isAccountActive(ServerRequest serverRequest) {
         LOG.info("isAccountActive");
 
-        return userAccount.isAccountActive(serverRequest).flatMap(s ->
+        return userAccount.isAccountActive(serverRequest.pathVariable("authenticationId")).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
         .onErrorResume(e -> {
             LOG.error("is account active check failed", e);
@@ -97,7 +97,11 @@ public class AccountHandler implements Handler {
     @Override
     public Mono<ServerResponse> validateEmailLoginSecret(ServerRequest serverRequest) {
         LOG.info("validate login secret");
-        return userAccount.validateEmailLoginSecret(serverRequest).flatMap(s ->
+
+        String authenticationId = serverRequest.pathVariable("authenticationId");
+        String secret = serverRequest.pathVariable("secret");
+
+        return userAccount.validateEmailLoginSecret(authenticationId, secret).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
                     LOG.error("validateEmailLoginSecret failed, error: ", e.getMessage());
@@ -111,6 +115,25 @@ public class AccountHandler implements Handler {
 
         return userAccount.delete(serverRequest).flatMap(s ->
                 ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
+                .onErrorResume(e -> {
+                    LOG.warn("deleted failed, error: {}", e.getMessage());
+                    return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));
+                });
+    }
+
+    @Override
+    public Mono<ServerResponse> updateAuthenticationPassword(ServerRequest serverRequest) {
+        LOG.info("delete account using if password secret has expired and account is false");
+        return serverRequest.bodyToMono(Map.class)
+                .flatMap(map -> {
+                    final String authenticationId = map.get("authenticationId").toString();
+                    final String secret = map.get("secret").toString();
+                    final String password = map.get("password").toString();
+
+                    return userAccount.updateAuthenticationPassword(authenticationId, secret, password);
+                })
+                .flatMap(s ->
+                    ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(e -> {
                     LOG.warn("deleted failed, error: {}", e.getMessage());
                     return ServerResponse.badRequest().bodyValue(getMap(Pair.of("error", e.getMessage())));

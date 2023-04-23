@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -22,6 +23,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static me.sonam.account.handler.AccountHandler.getMap;
+
 public class UserAccountService implements UserAccount {
     private static final Logger LOG = LoggerFactory.getLogger(UserAccountService.class);
 
@@ -32,12 +35,15 @@ public class UserAccountService implements UserAccount {
     private String deleteUser;
 
     @Value("${authentication-rest-service.root}${authentication-rest-service.activate}")
-    private String activateAuthentication;
+    private String activateAuthenticationEndpoint;
 
     @Value("${jwt-service.root}${jwt-service.accesstoken}")
     private String jwtRestService;
     @Value("${authentication-rest-service.root}${authentication-rest-service.delete}")
     private String deleteAuthentication;
+
+    @Value("${authentication-rest-service.root}${authentication-rest-service.update-no-auth-password}")
+    private String updateAuthenticationNoAuthPassword;
 
     @Value("${email-rest-service.root}${email-rest-service.emails}")
     private String emailEp;
@@ -78,12 +84,11 @@ public class UserAccountService implements UserAccount {
     }
 
     @Override
-    public Mono<String> isAccountActive(ServerRequest serverRequest) {
+    public Mono<String> isAccountActive(String authenticationId) {
         LOG.info("checking account active status for userId");
 
-        return accountRepository.existsByAuthenticationIdAndActiveTrue(
-                serverRequest.pathVariable("authenticationId"))
-                .flatMap(aBoolean -> Mono.just(aBoolean.toString()));
+        return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
+                .flatMap(aBoolean -> Mono.just("Account active status is " + aBoolean.toString()));
     }
 
     @Override
@@ -130,7 +135,7 @@ public class UserAccountService implements UserAccount {
                     return accountRepository.save(account);
                 })
                 .flatMap(account -> {
-                    StringBuilder stringBuilder = new StringBuilder(activateAuthentication).append(authenticationId);
+                    StringBuilder stringBuilder = new StringBuilder(activateAuthenticationEndpoint).append(authenticationId);
                     LOG.info("send activate webrequest to authentication-rest-service: {}", stringBuilder.toString());
                     WebClient.ResponseSpec spec = webClientBuilder.build().put().uri(stringBuilder.toString()).retrieve();
 
@@ -226,12 +231,14 @@ public class UserAccountService implements UserAccount {
         return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
                 .filter(aBoolean -> aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("Account is not active or does not exist")))
-                .doOnNext(aBoolean -> {
+                .map(aBoolean -> {
                     LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
-                    passwordSecretRepository.deleteById(authenticationId);
+                    passwordSecretRepository.deleteById(authenticationId).subscribe(
+                            unused -> LOG.info("deleted if there was any in passwordSecret"));
+                    return aBoolean;
                 })
-                .flatMap(unused -> {
-                    LOG.info("generate random text: {}", unused);
+                .flatMap(aBooean -> {
+                    LOG.info("generate random text");
                     return generateRandomText(10);
                 })
                 .flatMap(randomText -> Mono.just(new PasswordSecret(authenticationId, randomText,
@@ -303,7 +310,7 @@ public class UserAccountService implements UserAccount {
                 .switchIfEmpty(Mono.error(new AccountException("Account does not exist with this authenticationId")))
                 .filter(account -> account.getActive())
                 .switchIfEmpty(Mono.error(new AccountException("Account is not active")))
-                .flatMap(account -> Mono.just(new StringBuilder("Your reuqested login id "+ account.getAuthenticationId())
+                .flatMap(account -> Mono.just(new StringBuilder("Your requested login id "+ account.getAuthenticationId())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                         .zipWith(accountMono))
                 .flatMap(objects -> email(objects.getT2().getEmail(),"Your requested information", objects.getT1().toString()));
@@ -311,11 +318,8 @@ public class UserAccountService implements UserAccount {
 
     //authId/passwordsecret
     @Override
-    public Mono<String> validateEmailLoginSecret(ServerRequest serverRequest) {
+    public Mono<String> validateEmailLoginSecret(String authenticationId, String secret) {
         LOG.info("validate email login secret");
-
-        String authenticationId = serverRequest.pathVariable("authenticationId");
-        String secret = serverRequest.pathVariable("secret");
 
         return passwordSecretRepository.findById(authenticationId)
                 .switchIfEmpty(Mono.error(new AccountException("no passwordsecret found with authenticationId")))
@@ -392,9 +396,41 @@ public class UserAccountService implements UserAccount {
                     LOG.info("email response is: {}", map);
                     return Mono.just(map.get("message").toString());
                 }).onErrorResume(throwable -> {
-                    LOG.error("email failed", throwable.getMessage());
+                    LOG.error("email failed: {}", throwable.getMessage());
                     return  Mono.error(new AccountException("Email failed: "+ throwable.getMessage()));
                 });
+    }
+
+    @Override
+    public Mono<String> updateAuthenticationPassword(String authenticationId, String secret, String password) {
+        LOG.info("update authentication password");
+
+        return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
+                .filter(aBoolean -> aBoolean)
+                .switchIfEmpty(Mono.error(new AccountException("account is not active or does not exist")))
+                .flatMap(aBoolean -> {
+                    LOG.info("active?: {}", aBoolean);
+                    return validateEmailLoginSecret(authenticationId, secret);
+                })
+                .map(map -> {
+                    LOG.info("delete passwordSecret by authenticationId after success validation of secret");
+                    return passwordSecretRepository.deleteById(authenticationId);
+                }).flatMap(voidMono -> {
+                            WebClient.ResponseSpec responseSpec = webClientBuilder.build().put().uri(updateAuthenticationNoAuthPassword)
+                                    .bodyValue(getMap(
+                                            Pair.of("authenticationId", authenticationId),
+                                            Pair.of("password", password)))
+                                    .retrieve();
+
+                            return  responseSpec.bodyToMono(Map.class).flatMap(map -> {
+                                LOG.info("response from authentication-rest-service is {}", map.get("message"));
+                                return Mono.just(map.get("message").toString());
+                            }).onErrorResume(throwable -> {
+                                LOG.error("password updated failed when calling authentication-rest-service {}", throwable.getMessage());
+                                return Mono.error(new AccountException("Password update failed: " + throwable.getMessage()));
+                            });
+                        }
+                );
     }
 
     /**

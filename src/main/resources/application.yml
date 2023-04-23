@@ -37,6 +37,7 @@ authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
   activate: /authentications/activate/
   delete: /authentications/
+  update-no-auth-password: /authentications/noauth/password
 
 jwt-service:
   root: ${JWT_REST_SERVICE}
@@ -82,6 +83,8 @@ permitpath:
   - path: /accounts/validate/secret/*/*
     httpMethods: PUT
   - path: /actuator/info
+  - path: /accounts/authentications/password
+    httpMethods: PUT
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
 jwtrequest:

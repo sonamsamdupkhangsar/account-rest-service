@@ -40,6 +40,7 @@ authentication-rest-service:
   root: http://localhost:{port}
   activate: /authentications/activate/
   delete: /authentications/
+  update-no-auth-password: /authentications/noauth/password
 
 jwt-service:
   root: http://localhost:{port}
@@ -78,6 +79,8 @@ permitpath:
   - path: /accounts/email/authenticationId/*
     httpMethods: PUT
   - path: /accounts/validate/secret/*/*
+    httpMethods: PUT
+  - path: /accounts/authentications/password
     httpMethods: PUT
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
