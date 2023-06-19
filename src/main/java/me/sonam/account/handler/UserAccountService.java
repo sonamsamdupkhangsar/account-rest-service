@@ -1,12 +1,12 @@
 package me.sonam.account.handler;
 
+import jakarta.annotation.PostConstruct;
 import me.sonam.account.handler.email.Email;
 import me.sonam.account.repo.AccountRepository;
 import me.sonam.account.repo.PasswordSecretRepository;
 import me.sonam.account.repo.entity.Account;
 import me.sonam.account.repo.entity.PasswordSecret;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
-import me.sonam.security.util.HmacClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -37,8 +36,6 @@ public class UserAccountService implements UserAccount {
     @Value("${authentication-rest-service.root}${authentication-rest-service.activate}")
     private String activateAuthenticationEndpoint;
 
-    @Value("${jwt-service.root}${jwt-service.accesstoken}")
-    private String jwtRestService;
     @Value("${authentication-rest-service.root}${authentication-rest-service.delete}")
     private String deleteAuthentication;
 
@@ -59,9 +56,6 @@ public class UserAccountService implements UserAccount {
 
     @Value("${secretExpire}")
     private int secretExpiresInHour;
-
-    @Autowired
-    private HmacClient hmacClient;
 
     @Autowired
     private AccountRepository accountRepository;

@@ -2,7 +2,6 @@ package me.sonam.account;
 
 import me.sonam.account.handler.UserAccountService;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
-import me.sonam.security.jwt.PublicKeyJwtDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -21,15 +20,9 @@ public class WebClientDevConfig {
     }
 
     @Bean
-    public PublicKeyJwtDecoder publicKeyJwtDecoder() {
-        return new PublicKeyJwtDecoder(webClientBuilder());
-    }
-
-    @Bean
     public ReactiveRequestContextHolder reactiveRequestContextHolder() {
         return new ReactiveRequestContextHolder(webClientBuilder());
     }
-
     @Bean
     public UserAccountService userAccountService() {
         return new UserAccountService(webClientBuilder());
