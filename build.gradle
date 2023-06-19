@@ -90,7 +90,7 @@ publishing {
             url = "https://maven.pkg.github.com/sonamsamdupkhangsar/account-rest-service"
             credentials {
                 username = System.getenv("USERNAME")
-                password = System.getenv("GITHUB_TOKEN")
+                password = System.getenv("PERSONAL_ACCESS_TOKEN")
             }
         }
     }
