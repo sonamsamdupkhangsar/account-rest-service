@@ -1,7 +1,6 @@
 package me.sonam.account;
 
-import lombok.extern.java.Log;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
  * Test the liveness and readiness endpoints
  */
 @AutoConfigureWebTestClient
-@Log
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {Application.class})
 public class LivenessReadinesslRestServiceIntegTest {

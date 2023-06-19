@@ -5,13 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 
-@EnableEurekaClient
 @SpringBootApplication( scanBasePackages = {"me.sonam.account", "me.sonam.security"})
 public class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
@@ -19,7 +17,7 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
-    @Bean()
+    @Bean
     ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {
         ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
         initializer.setConnectionFactory(connectionFactory);

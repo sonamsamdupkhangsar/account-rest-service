@@ -75,7 +75,6 @@ public class AccountRestServiceTest {
     private static String activateAuthenticationEndpoint = "http://localhost:{port}";///authentications/activate/";
     private static String activateUserEndpoint = "http://localhost:{port}";///user/activate/";
     private static String jwtRestServiceAccesstoken = "http://localhost:{port}";///jwts/accesstoken";
-
     @Before
     public void setUp() {
         LOG.info("setup mock");
@@ -111,7 +110,7 @@ public class AccountRestServiceTest {
         r.add("email-rest-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
         r.add("authentication-rest-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
         r.add("user-rest-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
-        r.add("jwt-service.root", () -> "http://localhost:"+ mockWebServer.getPort());
+        r.add("auth-server.root", () -> "http://localhost:"+ mockWebServer.getPort());
     }
 
     @AfterEach
@@ -338,13 +337,13 @@ public class AccountRestServiceTest {
 
         Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
-
-//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
-
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
@@ -355,7 +354,7 @@ public class AccountRestServiceTest {
         LOG.info("response: {}", result.getResponseBody().get("message")) ;
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
 
         request = mockWebServer.takeRequest();
@@ -387,14 +386,15 @@ public class AccountRestServiceTest {
         String emailTo = "emailActivationLink@sonam.co";
 
         Account account = new Account(emailTo, emailTo, true, LocalDateTime.now());
-        //mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
-
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
@@ -406,7 +406,7 @@ public class AccountRestServiceTest {
         assertThat(result.getResponseBody().get("message")).isEqualTo("email successfully sent");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
 
         request = mockWebServer.takeRequest();
@@ -443,22 +443,24 @@ public class AccountRestServiceTest {
     @Test
     public void createAccount() throws InterruptedException {
         String emailTo = "createAccount@sonam.co";
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
-//        mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody("Account created successfully.  Check email for activating account"));
         EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+emailTo+"/"+emailTo)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
 
         request = mockWebServer.takeRequest();
@@ -494,10 +496,13 @@ public class AccountRestServiceTest {
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
         LOG.info("try to POST with the same email/authId");
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
@@ -507,7 +512,7 @@ public class AccountRestServiceTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+        assertThat(request.getPath()).isEqualTo("/oauth2/token?grant_type=client_credentials&scope=message.read%20message.write");
 
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
         assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
@@ -525,11 +530,13 @@ public class AccountRestServiceTest {
         Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", false, LocalDateTime.now());
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
-        //mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
@@ -541,7 +548,7 @@ public class AccountRestServiceTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
         assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
@@ -605,15 +612,17 @@ public class AccountRestServiceTest {
 
         Account account = new Account(authId, email, false, LocalDateTime.now());
         LOG.info("try to POST with the same email/authId");
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
 
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
-
-//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -624,7 +633,7 @@ public class AccountRestServiceTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
 
         request = mockWebServer.takeRequest();
@@ -685,11 +694,14 @@ public class AccountRestServiceTest {
         String authId = "sendAuthenticationId";
 
         Account account = new Account(authId, emailTo, true, LocalDateTime.now());
-        //mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("Account created successfully.  Check email for activating account"));
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
 
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
@@ -703,7 +715,7 @@ public class AccountRestServiceTest {
         assertThat(result.getResponseBody().get("message")).isEqualTo("email successfully sent");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
 
         request = mockWebServer.takeRequest();

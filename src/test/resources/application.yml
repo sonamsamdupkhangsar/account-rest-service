@@ -25,11 +25,11 @@ spring:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa
     password:
-
-POSTGRES_USERNAME: dusername
-POSTGRES_DBNAME: dbname
-POSTGRES_SERVICE: dservice
-POSTGRES_PASSWORD: dpassword
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9001
 
 user-rest-service:
   root: http://localhost:{port}
@@ -42,10 +42,13 @@ authentication-rest-service:
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
 
-jwt-service:
-  root: http://localhost:{port}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
+
+# this is used for getting accesstoken by header filter in jwt-validator (ReactiveRequestContextHolder.class)
+auth-server:
+  root: http://localhost:9001
+  oauth2token:
+    path: /oauth2/token
+    params: ?grant_type=client_credentials
 
 email-rest-service:
   root: http://localhost:{port}
@@ -87,18 +90,25 @@ permitpath:
 jwtrequest:
   - in: /accounts/(.)*/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/emailmysecret/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
-    jwt: request
-
-hmacKey:
-  clientId: account-rest-service
-  algorithm: HmacMD5
-  secretKey: mysecret
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
