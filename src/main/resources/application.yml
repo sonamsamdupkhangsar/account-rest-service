@@ -56,11 +56,6 @@ account-rest-service:
   root: ${ACCOUNT_REST_SERVICE}
   activate: /accounts/activate
 
-hmacKey:
-  clientId: ${HMAC_CLIENTID}
-  algorithm: ${HMAC_ALGORITHM}
-  secretKey: ${HMAC_SECRET}
-
 emailFrom: ${EMAIL_FROM}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
@@ -94,16 +89,29 @@ permitpath:
 jwtrequest:
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/emailmysecret/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/(.)*/(.)*
     out: /emails
-    jwt: forward
+    accessToken:
+      option: forward
   - in: /accounts/activate/(.)*/(.)*
     out: /users/activate/(.)*
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
