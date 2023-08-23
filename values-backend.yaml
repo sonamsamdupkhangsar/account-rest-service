@@ -95,6 +95,10 @@ envs:
     value: https://account-rest-service.backend.svc.cluster.local:80
   - name: DEFAULT_ZONE
     value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+  - name: ISSUER_URL
+    value: http://authorization-server:9001
+  - name: OAUTH_CLIENTS
+    value: oauth-client
 
 
 health:
