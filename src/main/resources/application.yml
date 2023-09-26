@@ -26,7 +26,11 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode: ${DB_SSLMODE}
-
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URL}
 
 user-rest-service:
     root: ${USER_REST_SERVICE}
@@ -39,11 +43,6 @@ authentication-rest-service:
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
 
-jwt-service:
-  root: ${JWT_REST_SERVICE}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
-
 email-rest-service:
   root: ${EMAIL_REST_SERVICE}
   emails: /emails
@@ -52,10 +51,11 @@ account-rest-service:
   root: ${ACCOUNT_REST_SERVICE}
   activate: /accounts/activate
 
-hmacKey:
-  clientId: ${HMAC_CLIENTID}
-  algorithm: ${HMAC_ALGORITHM}
-  secretKey: ${HMAC_SECRET}
+auth-server:
+  root: http://authorization-server
+  oauth2token:
+    path: /oauth2/token
+    params: ?grant_type=client_credentials
 
 emailFrom: ${EMAIL_FROM}
 emailBody: Please click on this link to activate your account
@@ -85,21 +85,40 @@ permitpath:
   - path: /actuator/info
   - path: /accounts/authentications/password
     httpMethods: PUT
+  - path: /accounts/email/*
+    scopes: message.write
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
 jwtrequest:
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/emailmysecret/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/(.)*/(.)*
     out: /emails
-    jwt: forward
+    accessToken:
+      option: forward
   - in: /accounts/activate/(.)*/(.)*
     out: /users/activate/(.)*
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+
+token:
+  audiences: ${OAUTH_CLIENTS}
+  issuerUri: ${ISSUER_URL}
