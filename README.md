@@ -65,7 +65,6 @@ export PGPASSWORD=$(kubectl get secret <SECRET_NAME> -o 'jsonpath={.data.passwor
 echo $PGPASSWORD;
 export PGSSLMODE=require;
 psql -U <USER> -d projectdb -h localhost -p 6432
-
 ```
 
 ## User Account Workflow
