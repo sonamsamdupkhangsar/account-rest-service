@@ -15,8 +15,8 @@ EUREKA_PASSWORD: test
 eureka:
   client:
     enabled: true
-
-DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+    serviceUrl:
+      defaultZone: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
 USER_REST_SERVICE: http://user-rest-service
 AUTHENTICATION_REST_SERVICE: http://authentication-rest-service

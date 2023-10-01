@@ -10,7 +10,7 @@ image:
 imagePullSecrets:
   - name: github-regcred
 nameOverride: ""
-fullnameOverride: ""
+fullnameOverride: "account-rest-service"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -81,20 +81,14 @@ postgres:
 envs:
   - name: DB_SSLMODE
     value: REQUIRE
-  - name: EUREKA_HOST
-    value: discovery-service.sonam.cloud
   - name: USER_REST_SERVICE
     value: http://user-rest-service-mychart.backend.svc.cluster.local:80
   - name: AUTHENTICATION_REST_SERVICE
     value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
-  - name: JWT_REST_SERVICE
-    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
   - name: EMAIL_REST_SERVICE
     value: http://email-rest-service-mychart.backend.svc.cluster.local:80
   - name: ACCOUNT_REST_SERVICE
     value: https://account-rest-service.backend.svc.cluster.local:80
-  - name: DEFAULT_ZONE
-    value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
   - name: ISSUER_URL
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_CLIENTS
@@ -114,21 +108,3 @@ health:
     initialDelaySeconds: 60
     periodSeconds: 5
     failureThreshold: 5
-
-secretFiles:
-  - file: eureka-discovery
-    keys:
-      - key: user
-        name: EUREKA_USER
-      - key: password
-        name: EUREKA_PASSWORD
-  - file: account-rest-service
-    keys:
-      - key: hmac.clientId
-        name: HMAC_CLIENTID
-      - key: hmac.algorithm
-        name: HMAC_ALGORITHM
-      - key: hmac.secret
-        name: HMAC_SECRET
-      - key: email.from
-        name: EMAIL_FROM

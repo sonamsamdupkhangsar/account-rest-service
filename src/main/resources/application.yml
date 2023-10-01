@@ -61,11 +61,6 @@ emailFrom: ${EMAIL_FROM}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${DEFAULT_ZONE}
-
 permitpath:
   - path: /accounts/api/health/*
   - path: /accounts/active/*/*
