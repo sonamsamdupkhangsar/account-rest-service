@@ -108,3 +108,9 @@ health:
     initialDelaySeconds: 60
     periodSeconds: 5
     failureThreshold: 5
+
+secretFiles:
+  - file: account-rest-service
+    keys:
+      - key: email.from
+        name: EMAIL_FROM
