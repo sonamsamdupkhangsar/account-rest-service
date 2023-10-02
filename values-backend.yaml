@@ -81,14 +81,6 @@ postgres:
 envs:
   - name: DB_SSLMODE
     value: REQUIRE
-  - name: USER_REST_SERVICE
-    value: http://user-rest-service
-  - name: AUTHENTICATION_REST_SERVICE
-    value: http://authentication-rest-service
-  - name: EMAIL_REST_SERVICE
-    value: http://email-rest-service
-  - name: ACCOUNT_REST_SERVICE
-    value: http://account-rest-service
   - name: API_GATEWAY
     value: https://api-gateway.sonam.cloud
   - name: ISSUER_URL

@@ -33,18 +33,18 @@ spring:
           issuer-uri: ${ISSUER_URL}
 
 user-rest-service:
-    root: ${USER_REST_SERVICE}
+    root: http://user-rest-service
     activate: /users/activate/
     delete: /users/
 
 authentication-rest-service:
-  root: ${API_GATEWAY}
+  root: http://authentication-rest-service
   activate: /authentications/activate/
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
 
 email-rest-service:
-  root: ${EMAIL_REST_SERVICE}
+  root: http://email-rest-service
   emails: /emails
 
 account-rest-service:
