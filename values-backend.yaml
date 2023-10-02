@@ -82,13 +82,13 @@ envs:
   - name: DB_SSLMODE
     value: REQUIRE
   - name: USER_REST_SERVICE
-    value: http://user-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://user-rest-service
   - name: AUTHENTICATION_REST_SERVICE
-    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://authentication-rest-service
   - name: EMAIL_REST_SERVICE
-    value: http://email-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://email-rest-service
   - name: ACCOUNT_REST_SERVICE
-    value: https://account-rest-service.backend.svc.cluster.local:80
+    value: http://account-rest-service
   - name: ISSUER_URL
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_CLIENTS
