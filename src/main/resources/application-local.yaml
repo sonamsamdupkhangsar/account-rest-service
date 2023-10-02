@@ -32,3 +32,4 @@ EMAIL_FROM: ${EMAIL_FROM_USER}
 ISSUER_URL: http://api-gateway:9001/issuer #http://my-server:9001
 
 OAUTH_CLIENTS: oauth-client
+API_GATEWAY: http://api-gateway

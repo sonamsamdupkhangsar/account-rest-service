@@ -89,6 +89,8 @@ envs:
     value: http://email-rest-service
   - name: ACCOUNT_REST_SERVICE
     value: http://account-rest-service
+  - name: API_GATEWAY
+    value: https://api-gateway.sonam.cloud
   - name: ISSUER_URL
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_CLIENTS
@@ -114,3 +116,9 @@ secretFiles:
     keys:
       - key: email.from
         name: EMAIL_FROM
+  - file: service-service-client-credential-flow-secret
+    keys:
+      - key: base64EncodedClientIdSecret
+        name: BASE64_CLIENT_ID_SECRET
+      - key: scopes
+        name: REQUEST_SCOPES

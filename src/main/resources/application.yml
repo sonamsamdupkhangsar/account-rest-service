@@ -38,7 +38,7 @@ user-rest-service:
     delete: /users/
 
 authentication-rest-service:
-  root: ${AUTHENTICATION_REST_SERVICE}
+  root: ${API_GATEWAY}
   activate: /authentications/activate/
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
@@ -48,7 +48,7 @@ email-rest-service:
   emails: /emails
 
 account-rest-service:
-  root: ${ACCOUNT_REST_SERVICE}
+  root: ${API_GATEWAY}
   activate: /accounts/activate
 
 auth-server:
@@ -90,19 +90,19 @@ jwtrequest:
     accessToken:
       option: request
       scopes: message.read message.write
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/emailmysecret/(.)*
     out: /emails
     accessToken:
       option: request
       scopes: message.read message.write
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
     accessToken:
       option: request
       scopes: message.read message.write
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/(.)*/(.)*
     out: /emails
     accessToken:
@@ -112,7 +112,7 @@ jwtrequest:
     accessToken:
       option: request
       scopes: message.read message.write
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
 
 token:
   audiences: ${OAUTH_CLIENTS}
