@@ -91,17 +91,12 @@ flowchart TD
 flowchart TD
   User[user request] -->Activate[/Activate Account/]--> account-rest-service
    
-  subgraph account-rest-service
-    
-  activateAccount --> authenticationIdExists{authenticationId exist?}
-  
-  authenticationIdExists --"read from"--> accountDb[(account postgresdb)]
-  
+  subgraph account-rest-service    
+  activateAccount --> authenticationIdExists{authenticationId exist?}  
+  authenticationIdExists --"read from"--> accountDb[(account postgresdb)]  
   authenticationIdExists --> |Yes| passwordSecretCheck[Check PasswordSecret]
-  authenticationIdExists --> |No| ReturnError[Return 400 error to request]
-  
-  passwordSecretCheck --> passwordSecretValid{PasswordSecretExists and Valid?}
-  
+  authenticationIdExists --> |No| ReturnError[Return 400 error to request]  
+  passwordSecretCheck --> passwordSecretValid{PasswordSecretExists and Valid?}  
   passwordSecretValid --> accountDb
   passwordSecretValid -->|Yes| setAccountActive   
   setAccountActive --> accountDb
@@ -114,7 +109,7 @@ flowchart TD
 ## Email activation link
 ```mermaid
 flowchart TD
-  User[user-request -->EmailActivationLink[/Email account activation link/]--> account-rest-service
+  User[user-request] -->EmailActivationLink[/Email account activation link/]--> account-rest-service
   
   subgraph account-rest-service
   emailActivationLink --> validateAuthenticationIdExists["AuthenticationIdExists?"]
