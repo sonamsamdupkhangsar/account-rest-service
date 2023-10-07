@@ -106,7 +106,7 @@ flowchart TD
   setAccountActive --"activate authentication"--> activateAuthentication[authentication-rest-service] 
   passwordSecretValid -->|No| ReturnError
   activateAuthentication --"activate user"--> activateUser["user-rest-service"]
-  end 
+  
 ```  
   
 ## Email activation link
