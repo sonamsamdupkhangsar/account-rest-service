@@ -100,9 +100,9 @@ flowchart TD
   passwordSecretValid --> accountDb
   passwordSecretValid -->|Yes| setAccountActive   
   setAccountActive --> accountDb
-  setAccountActive --"activate authentication"--> activateAuthentication[authentication-rest-service] 
+  setAccountActive --"activate authentication"--> activateAuthentication[<a href='https://github.com/sonamsamdupkhangsar/authentication-rest-service'>authentication-rest-service</a>] 
   passwordSecretValid -->|No| ReturnError
-  activateAuthentication --"activate user"--> activateUser["user-rest-service"]
+  activateAuthentication --"activate user"--> activateUser[<a href='https://github.com/sonamsamdupkhangsar/user-rest-service'>user-rest-service</a>]
   end 
 ```  
   
@@ -120,7 +120,7 @@ flowchart TD
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --"write to"--> accountDb
   createNewSecretPassword --> emailActivationLink["email activation link"]
-  emailActivationLink --> email-rest-service    
+  emailActivationLink --> <a href='https://github.com/sonamsamdupkhangsar/email-rest-service'>email-rest-service</>    
   end              
 ```
 
