@@ -111,7 +111,7 @@ flowchart TD
 flowchart TD
   User[user-request] -->UserEmailActivationLink[/Email account activation link/]--> account-rest-service
   
-  subgraph account-rest-service
+  subgraph account-rest-service[emailActivationLink]
   validateAuthenticationIdExists["AuthenticationId exists?"]
   validateAuthenticationIdExists --"read from"--> accountDb[(account postgresdb)]
   validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
