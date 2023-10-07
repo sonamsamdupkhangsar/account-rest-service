@@ -120,7 +120,7 @@ flowchart TD
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --"write to"--> accountDb
   createNewSecretPassword --> emailActivationLink["email activation link"]
-  emailActivationLink --> <a href='https://github.com/sonamsamdupkhangsar/email-rest-service'>email-rest-service</>    
+  emailActivationLink --> email-rest-service[<a href='https://github.com/sonamsamdupkhangsar/email-rest-service'>email-rest-service</>]    
   end              
 ```
 
