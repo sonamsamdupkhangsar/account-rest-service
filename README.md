@@ -131,15 +131,8 @@ flowchart TD
   User[user-request] -->EmailSecret[/Email Secret for Password reset/]--> account-rest-service
   
   subgraph account-rest-service[emailMySecret]  
-  one--> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
-  validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
-  validateAuthenticationIdExistsAndTrue -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
-  deleteAnySecretPassword --> accountDb
-  validateAuthenticationIdExistsAndTrue -->|No| ReturnError[Return 400 error to request]
-  deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
-  createNewSecretPassword --> accountDb
-  createNewSecretPassword --> emailSecret["email secret"]
-  emailSecret --> email-rest-service   
+  one --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+ 
   end               
 ```
 
