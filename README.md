@@ -130,7 +130,10 @@ flowchart TD
 
   User[user-request] -->EmailSecret[/Email Secret for Password reset/]--> account-rest-service
   
-  
+  subgraph account-request-service[emailMySecret]  
+  one--> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+ 
+  end               
 ```
 
 
