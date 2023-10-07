@@ -91,7 +91,7 @@ flowchart TD
 flowchart TD
   User[user request] -->Activate[/Activate Account/]--> account-rest-service-graph
    
-  subgraph account-rest-service-graph["account-rest-service"]    
+  subgraph account-rest-service-graph[account-rest-service]    
     
   activateAccount --> authenticationIdExists{authenticationId exist?}
   
