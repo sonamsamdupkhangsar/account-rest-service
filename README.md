@@ -90,8 +90,6 @@ flowchart TD
 ```mermaid
 flowchart TD
   User[user request] -->Activate[/Activate Account/]--> account-rest-service
-   
-  subgraph account-rest-service    
     
   activateAccount --> authenticationIdExists{authenticationId exist?}
   
