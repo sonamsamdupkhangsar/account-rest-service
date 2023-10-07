@@ -127,9 +127,7 @@ flowchart TD
 ## Email User secret
 ```mermaid
 flowchart TD
- ---
- User requests for a secret by email for password reset function
- ---
+
   User[user-request] -->EmailSecret[/Email Secret for Password reset/]--> account-rest-service
   
   subgraph account-request-service[emailMySecret]  
