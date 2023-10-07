@@ -127,10 +127,13 @@ flowchart TD
 ## Email User secret
 ```mermaid
 flowchart TD
+ ---
+ User requests for a secret by email for password reset function
+ ---
   User[user-request] -->EmailSecret[/Email Secret for Password reset/]--> account-rest-service
   
-  subgraph account-rest-service[emailMySecret]  
-  validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+  subgraph account-request-service[emailMySecret]  
+  one--> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
   validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
   validateAuthenticationIdExistsAndTrue -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
   deleteAnySecretPassword --> accountDb
@@ -138,8 +141,8 @@ flowchart TD
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --> accountDb
   createNewSecretPassword --> emailSecret["email secret"]
-  emailSecret --> email-rest-service          
-  end        
+  emailSecret --> email-rest-service   
+  end               
 ```
 
 
