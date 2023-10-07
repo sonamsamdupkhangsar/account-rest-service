@@ -114,7 +114,9 @@ flowchart TD
 ## Email activation link
 ```mermaid
 flowchart TD
-  User --"user requests to get a email activation link"--> account-rest-service
+  User -->EmailActivationLink[/Email account activation link/]--> account-rest-service
+  
+  subgraph account-rest-service
   account-rest-service --> validateAuthenticationIdExists["AuthenticationIdExists?"]
   validateAuthenticationIdExists --> accountDb[(account postgresdb)]
   validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
@@ -123,7 +125,8 @@ flowchart TD
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --> accountDb
   createNewSecretPassword --> emailActivationLink["email activation link"]
-  emailActivationLink --> email-rest-service                  
+  emailActivationLink --> email-rest-service    
+  end              
 ```
 
 ## Email User secret
