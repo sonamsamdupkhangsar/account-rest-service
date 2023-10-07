@@ -119,7 +119,7 @@ flowchart TD
   validateAuthenticationIdExists -->|No| ReturnError[Return 400 error to request]
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --"write to"--> accountDb
-  createNewSecretPassword --> emailActivationLink["email activation link"]
+  createNewSecretPassword --> emailActivationLink[/email activation link/]
   emailActivationLink --> email-rest-service[<a href='https://github.com/sonamsamdupkhangsar/email-rest-service'>email-rest-service</>]    
   end              
 ```
