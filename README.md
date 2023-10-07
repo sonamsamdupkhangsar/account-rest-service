@@ -89,7 +89,7 @@ flowchart TD
 ## ActivateAccount
 ```mermaid
 flowchart TD
-  User[user request] -->Activate[/Activate Account/]--> account-rest-service
+  User[user request] --> account-rest-service
    
   subgraph account-rest-service    
     
