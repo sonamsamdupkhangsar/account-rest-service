@@ -89,45 +89,48 @@ flowchart TD
 ## ActivateAccount
 ```mermaid
 flowchart TD
-  User --> account-rest-service
-  account-rest-service --> activateAccount["activate account"]  
-  activateAccount --> authenticationIdUnique{authenticationId unique?}
-  
-  authenticationIdUnique --> accountDb[(account postgresdb)]
-  
-  authenticationIdUnique --> |Yes| passwordSecretCheck[Check PasswordSecret]
-  authenticationIdUnique --> |No| ReturnError[Return 400 error to request]
-  
-  passwordSecretCheck --> passwordSecretValid{PasswordSecretExists and Valid?}
-  
+  User[user request] -->Activate[/Activate Account/]--> account-rest-service
+   
+  subgraph account-rest-service    
+  activateAccount --> authenticationIdExists{authenticationId exist?}  
+  authenticationIdExists --"read from"--> accountDb[(account postgresdb)]  
+  authenticationIdExists --> |Yes| passwordSecretCheck[Check PasswordSecret]
+  authenticationIdExists --> |No| ReturnError[Return 400 error to request]  
+  passwordSecretCheck --> passwordSecretValid{PasswordSecretExists and Valid?}  
   passwordSecretValid --> accountDb
   passwordSecretValid -->|Yes| setAccountActive   
   setAccountActive --> accountDb
-  setAccountActive --"activate authentication"--> activateAuthentication[authentication-rest-service] 
+  setAccountActive --"activate authentication"--> activateAuthentication[<a href='https://github.com/sonamsamdupkhangsar/authentication-rest-service'>authentication-rest-service</a>] 
   passwordSecretValid -->|No| ReturnError
-  activateAuthentication --"activate user"--> activateUser["user-rest-service"] 
+  activateAuthentication --"activate user"--> activateUser[<a href='https://github.com/sonamsamdupkhangsar/user-rest-service'>user-rest-service</a>]
+  end 
 ```  
   
 ## Email activation link
 ```mermaid
 flowchart TD
-  User --"user requests to get a email activation link"--> account-rest-service
-  account-rest-service --> validateAuthenticationIdExists["AuthenticationIdExists?"]
-  validateAuthenticationIdExists --> accountDb[(account postgresdb)]
+  User[user-request] -->UserEmailActivationLink[/Email account activation link/]--> account-rest-service
+  
+  subgraph account-rest-service[emailActivationLink]
+  validateAuthenticationIdExists["AuthenticationId exists?"]
+  validateAuthenticationIdExists --"read from"--> accountDb[(account postgresdb)]
   validateAuthenticationIdExists -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
-  deleteAnySecretPassword --> accountDb
+  deleteAnySecretPassword --"write to"--> accountDb
   validateAuthenticationIdExists -->|No| ReturnError[Return 400 error to request]
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
-  createNewSecretPassword --> accountDb
-  createNewSecretPassword --> emailActivationLink["email activation link"]
-  emailActivationLink --> email-rest-service                  
+  createNewSecretPassword --"write to"--> accountDb
+  createNewSecretPassword --> emailActivationLink[/email activation link/]
+  emailActivationLink --> email-rest-service[<a href='https://github.com/sonamsamdupkhangsar/email-rest-service'>email-rest-service</>]    
+  end              
 ```
 
 ## Email User secret
 ```mermaid
 flowchart TD
-  User --"user requests for a secret by email for password reset function"--> account-rest-service
-  account-rest-service --> validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
+  User[user-request] -->EmailSecret[/Email Secret for Password reset/]--> account-rest-service
+  
+  subgraph account-rest-service["EmailMySecret"]
+  validateAuthenticationIdExistsAndTrue["AuthenticationIdExistsAndIsActive?"]
   validateAuthenticationIdExistsAndTrue --> accountDb[(account postgresdb)]
   validateAuthenticationIdExistsAndTrue -->|Yes| deleteAnySecretPassword["delete existing secretPassword"]
   deleteAnySecretPassword --> accountDb
@@ -135,7 +138,8 @@ flowchart TD
   deleteAnySecretPassword --> createNewSecretPassword["create new secretPassword"]
   createNewSecretPassword --> accountDb
   createNewSecretPassword --> emailSecret["email secret"]
-  emailSecret --> email-rest-service                  
+  emailSecret --> email-rest-service   
+  end               
 ```
 
 
