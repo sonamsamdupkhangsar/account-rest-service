@@ -31,6 +31,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -382,12 +383,22 @@ public class AccountRestServiceTest {
     }
 
     @Test
-    public void emailMySecretForPasswordReset() throws InterruptedException {
+    public void emailMySecretForPasswordReset() throws Exception {
         String emailTo = "emailActivationLink@sonam.co";
 
         Account account = new Account(emailTo, emailTo, true, LocalDateTime.now());
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
+        LOG.info("request email secret");
+        emailSecret(emailTo);
+        LOG.info("request email secret again");
+        emailSecret(emailTo);
+        LOG.info("request email secret 3rd time");
+        emailSecret(emailTo);
+    }
+
+    // this is used to call multiple times if needed
+    private void  emailSecret(String emailTo) throws Exception {
         final String clientCredentialResponse = "{" +
                 "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
                 "    \"scope\": \"message.read message.write\"," +
@@ -399,11 +410,9 @@ public class AccountRestServiceTest {
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
-                .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
+        Flux<Map> mapFlux = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
+                .exchange().expectStatus().isOk().returnResult(Map.class).getResponseBody();
 
-        LOG.info("response: {}", result.getResponseBody().get("message"));
-        assertThat(result.getResponseBody().get("message")).isEqualTo("email successfully sent");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
         assertThat(request.getPath()).startsWith("/oauth2/token");
@@ -411,7 +420,19 @@ public class AccountRestServiceTest {
 
         request = mockWebServer.takeRequest();
         LOG.info("assert the path for authenticate was created using path '/create'");
+
         assertThat(request.getPath()).startsWith("/emails");
+
+        StepVerifier.create(mapFlux).expectSubscription().assertNext( map -> {
+            assertThat(map.get("message").toString()).isEqualTo("email successfully sent");
+            LOG.info("assert message contains email successfully sent");
+
+        }).verifyComplete();
+
+        StepVerifier.create(passwordSecretRepository.existsById(emailTo)).assertNext(aBoolean -> {
+                assertThat(aBoolean).isTrue();
+                LOG.info("assert passwordSecret exists by authId: {}", emailTo);
+        }).verifyComplete();
     }
 
     @Test
