@@ -33,3 +33,5 @@ ISSUER_URL: http://api-gateway:9001/issuer #http://my-server:9001
 
 OAUTH_CLIENTS: oauth-client
 API_GATEWAY: http://api-gateway
+REQUEST_SCOPES: message.read message.write
+BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==

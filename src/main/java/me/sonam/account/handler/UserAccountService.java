@@ -223,23 +223,18 @@ public class UserAccountService implements UserAccount {
         String authenticationId = serverRequest.pathVariable("authenticationId");
 
         return accountRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
-                .filter(aBoolean -> aBoolean)
+                .filter(aBoolean -> aBoolean) //filter the boolean value to make it empty if false on switchIfEmtpy
                 .switchIfEmpty(Mono.error(new AccountException("Account is not active or does not exist")))
-                .map(aBoolean -> {
-                    LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
-                    passwordSecretRepository.deleteById(authenticationId).subscribe(
-                            unused -> LOG.info("deleted if there was any in passwordSecret"));
-                    return aBoolean;
-                })
-                .flatMap(aBooean -> {
+                .flatMap(booleanValue -> {
                     LOG.info("generate random text");
                     return generateRandomText(10);
                 })
                 .flatMap(randomText -> Mono.just(new PasswordSecret(authenticationId, randomText,
                         ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(secretExpiresInHour))))
                 .flatMap(passwordSecret -> {
-                    LOG.info("passwordSecret created");
-                    return passwordSecretRepository.save(passwordSecret);
+                    LOG.info("delete existing if any passwordSecret by authId and save new passwordSecret");
+                    return passwordSecretRepository.deleteById(passwordSecret.getAuthenticationId())
+                            .then(passwordSecretRepository.save(passwordSecret));
                 })
                 .map(passwordSecret -> new StringBuilder("You new secret is: " + passwordSecret.getSecret())
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
