@@ -83,9 +83,9 @@ envs:
     value: REQUIRE
   - name: API_GATEWAY
     value: https://api-gateway.sonam.cloud
-  - name: ISSUER_URL
+  - name: ISSUER_URI
     value: https://authorization.sonam.cloud/issuer
-  - name: OAUTH_CLIENTS
+  - name: OAUTH_AUDIENCES
     value: oauth-client
 
 

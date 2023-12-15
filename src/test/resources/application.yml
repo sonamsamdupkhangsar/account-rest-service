@@ -30,6 +30,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:9001
+          jwk-set-uri: http://localhost:9000/issuer/.well-known/jwks.json
+          audiences: oauth-client
 
 user-rest-service:
   root: http://localhost:{port}
