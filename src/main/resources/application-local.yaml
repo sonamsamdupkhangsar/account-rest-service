@@ -35,3 +35,5 @@ JWT_SET_URI: ${ISSUER_ADDRESS}/issuer/.well-known/jwks.json
 
 REQUEST_SCOPES: message.read message.write
 BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+NEW_RELIC_ENABLED: false
+API_GATEWAY: http://api-gateway

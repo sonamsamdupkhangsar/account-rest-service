@@ -7,6 +7,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.0'
     id 'java-library'
     id 'maven-publish'
+    id "de.undercouch.download" version "5.3.0" //new relic agent download local
 }
 
 group = 'me.sonam'
@@ -100,4 +101,14 @@ publishing {
             from(components.java)
         }
     }
+}
+task downloadNewrelic(type: Download) {
+    mkdir 'newrelic'
+    src 'https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip'
+    dest file('newrelic')
+}
+
+task unzipNewrelic(type: Copy) {
+    from zipTree(file('newrelic/newrelic-java.zip'))
+    into rootDir
 }
