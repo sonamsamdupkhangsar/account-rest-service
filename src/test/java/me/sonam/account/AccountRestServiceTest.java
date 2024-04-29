@@ -533,7 +533,7 @@ public class AccountRestServiceTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/oauth2/token?grant_type=client_credentials&scope=message.read%20message.write");
+        assertThat(request.getPath()).isEqualTo("/oauth2/token");
 
         assertThat(result.getStatus()).isEqualTo(HttpStatus.CREATED);
         assertThat(result.getResponseBody().get("message")).isEqualTo("Account created successfully.  Check email for activating account");
