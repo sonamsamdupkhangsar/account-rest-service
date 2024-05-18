@@ -15,10 +15,12 @@ public interface UserAccount {
     Mono<String> activateAccount(ServerRequest serverRequest);
     Mono<String> emailActivationLink(ServerRequest serverRequest);
     Mono<String> emailMySecret(ServerRequest serverRequest);
+    Mono<String> emailMySecretUsingEmail(ServerRequest serverRequest);
+    Mono<String> emailActivationLinkUsingEmail(ServerRequest serverRequest);
     // internal service
     Mono<String> createAccount(ServerRequest serverRequest);
     Mono<String> sendAuthenticationId(ServerRequest serverRequest);
-    Mono<String> validateEmailLoginSecret(String authenticationId, String secret);
+    Mono<String> validateEmailLoginSecret(String email, String secret);
     Mono<String> delete(ServerRequest serverRequest);
-    Mono<String> updateAuthenticationPassword(String authenticationId, String secret, String password);
+    Mono<String> updateAuthenticationPassword(String email, String secret, String password);
 }

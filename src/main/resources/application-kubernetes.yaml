@@ -10,3 +10,5 @@ spring:
 eureka:
   client:
       enabled: false
+
+AUTH_MANAGER_APP_URL: https://authzmgr.sonam.cloud

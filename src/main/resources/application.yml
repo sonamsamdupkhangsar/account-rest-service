@@ -2,7 +2,7 @@ logging:
   level:
     root: error
     me:
-      sonam: info
+      sonam: debug
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -35,12 +35,12 @@ spring:
 
 user-rest-service:
     root: http://user-rest-service
-    activate: /users/activate/
+    activate: /users/{authenticationId}/active
     delete: /users/
 
 authentication-rest-service:
   root: http://authentication-rest-service
-  activate: /authentications/activate/
+  activate: /authentications/{authenticationId}/active
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
 
@@ -104,13 +104,21 @@ jwtrequest:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+  - in: /accounts/active/email-link/(.)*
+    out: /emails
+    accessToken:
+      option: forward
+      scopes: message.read, message.write
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/(.)*/(.)*
     out: /emails
     accessToken:
       option: forward
   - in: /accounts/activate/(.)*/(.)*
-    out: /users/activate/(.)*
+    out: /users/(.)*/active
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+
+auth-manager-app: ${AUTH_MANAGER_APP_URL}

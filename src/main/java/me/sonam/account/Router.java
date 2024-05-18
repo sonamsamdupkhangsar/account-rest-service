@@ -22,24 +22,58 @@ public class Router {
     @Bean
     public RouterFunction<ServerResponse> route(AccountHandler handler) {
         LOG.info("building router function");
-        return RouterFunctions.route(GET("/accounts/active/authenticationId/{authenticationId}")
+        return RouterFunctions
+                .route(GET("/accounts/{authenticationId}/active")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::isAccountActive)
-                .andRoute(GET("/accounts/activate/{authenticationId}/{secret}")
-                .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount)
-                .andRoute(PUT("/accounts/emailactivationlink/{authenticationId}")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLink)
-                .andRoute(PUT("/accounts/emailmysecret/{authenticationId}")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecret)
+
+                // user will click a link from their inbox that contains a url pointing this
+                // endpoint to activate such as 'http://api-gateway:8080/accounts/activate/test6/r5DFO6SFx2'
+                .andRoute(GET("/accounts/{authenticationId}/active/{secret}")
+                    .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount)
+
+                // called by authorization server
+                .andRoute(PUT("/accounts/active/email/{email}/password-secret")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLinkUsingEmail)
+
+                // called by authorization server
+                .andRoute(PUT("/accounts/email/{email}/password-secret")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecretUsingEmail)
+
+
                 .andRoute(POST("/accounts/{authenticationId}/{email}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::createAccount)
-                .andRoute(PUT("/accounts/email/authenticationId/{email}")
+
+                // called by authorization server
+                .andRoute(PUT("/accounts/email/{email}/authentication-id")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::sendLoginId)
-                .andRoute(PUT("/accounts/validate/secret/{authenticationId}/{secret}")
+
+                // user will click on link in email and get directed to authorization server and which will
+                // call this endpoint to start the process from authorization server
+                .andRoute(GET("/accounts/{email}/password-secret/{secret}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret)
+
                 .andRoute(DELETE("/accounts/email/{email}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::delete)
-                .andRoute(PUT("/accounts/authentications/password")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::updateAuthenticationPassword);
+
+                // authorization server will call this endpoint to update password
+                .andRoute(PUT("/accounts/password-secret")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::updateAuthenticationPassword)
+
+                /*.andRoute(PUT("/accounts/validate/secret/{authenticationId}/{secret}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret)
+*/
+
+
+
+                //.andRoute(PUT("/accounts/authentications/password")
+
+/*
+                .andRoute(PUT("/accounts/email/{authenticationId}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLink)
+
+                .andRoute(PUT("/accounts/emailmysecret/{authenticationId}")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecret) //part of forgot password process
+*/;
 
     }
 }

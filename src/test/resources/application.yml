@@ -35,12 +35,12 @@ spring:
 
 user-rest-service:
   root: http://localhost:{port}
-  activate: /users/activate/
+  activate: /users/{authenticationId}/active
   delete: /users/
 
 authentication-rest-service:
   root: http://localhost:{port}
-  activate: /authentications/activate/
+  activate: /authentications/{authenticationId}/active
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
 
@@ -71,21 +71,23 @@ eureka:
 
 permitpath:
   - path: /accounts/api/health/*
-  - path: /accounts/active/*/*
+  - path: /accounts/*/active
     httpMethods: GET
-  - path: /accounts/activate/*/*
+  - path: /accounts/*/active/*
     httpMethods: GET
-  - path: /accounts/emailactivationlink/*
+  - path: /accounts/active/email/*/password-secret
     httpMethods: PUT
-  - path: /accounts/emailmysecret/*
+  - path: /accounts/active/email-link/*
+    httpMethods: PUT
+  - path: /accounts/email/*/password-secret
     httpMethods: PUT
   - path: /accounts/*/*
     httpMethods: POST
-  - path: /accounts/email/authenticationId/*
+  - path: /accounts/email/*/authentication-id
     httpMethods: PUT
-  - path: /accounts/validate/secret/*/*
-    httpMethods: PUT
-  - path: /accounts/authentications/password
+  - path: /accounts/*/password-secret/*
+    httpMethods: GET
+  - path: /accounts/password-secret
     httpMethods: PUT
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
@@ -114,3 +116,6 @@ jwtrequest:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+
+
+auth-manager-app: http://localhost:9093

@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -43,7 +42,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static me.sonam.account.handler.AccountHandler.getMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -123,7 +121,7 @@ public class AccountRestServiceTest {
     public void isAccountActive() {
         final String uuid = UUID.randomUUID().toString();
         LOG.info("check for uuid: {}", uuid);
-        client.get().uri("/accounts/active/authenticationId/"+uuid)
+        client.get().uri("/accounts/"+uuid+"/active")
                 .exchange().expectStatus().isOk();
 
     }
@@ -147,11 +145,11 @@ public class AccountRestServiceTest {
                 .setHeader("Content-Type", "application/json")
                 .setBody("{\"message\":\"password updated\"}"));
 
-        Map<String, String> map = getMap(Pair.of("authenticationId", authenticationId),
-                Pair.of("secret", "mysecret"), Pair.of("password", "newPassword"));
+        Map<String, String> map = Map.of("email", account.getEmail(),
+                "secret", "mysecret", "password", "newPassword");
 
         LOG.info("update account authentication password");
-        EntityExchangeResult<Map> result = client.put().uri("/accounts/authentications/password")
+        EntityExchangeResult<Map> result = client.put().uri("/accounts/password-secret")
                 .bodyValue(map)
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
@@ -178,11 +176,11 @@ public class AccountRestServiceTest {
         PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
-        Map<String, String> map = getMap(Pair.of("authenticationId", authenticationId),
-                Pair.of("secret", "mysecret"), Pair.of("password", "newPassword"));
+        Map<String, String> map = Map.of("email", account.getEmail(),
+                "secret", "mysecret", "password", "newPassword");
 
         LOG.info("update account authentication password");
-        EntityExchangeResult<Map> result = client.put().uri("/accounts/authentications/password")
+        EntityExchangeResult<Map> result = client.put().uri("/accounts/password-secret")
                 .bodyValue(map)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
@@ -205,18 +203,18 @@ public class AccountRestServiceTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("activate response from user-rest-service endpoint is success"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<Map> result = client.get().uri("/accounts/activate/" + authenticationId+"/mysecret")
-                .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
+        EntityExchangeResult<String> result = client.get().uri("/accounts/" + authenticationId+"/active/mysecret")
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
-        LOG.info("response: {}", result.getResponseBody().get("message"));
-        assertThat(result.getResponseBody().get("message")).isEqualTo("account activated");
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).contains("account activated");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("PUT");
-        assertThat(request.getPath()).isEqualTo("/authentications/activate/"+authenticationId);
+        assertThat(request.getPath()).isEqualTo("/authentications/"+authenticationId+"/active");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("PUT");
-        assertThat(request.getPath()).isEqualTo("/users/activate/"+authenticationId);
+        assertThat(request.getPath()).isEqualTo("/users/"+authenticationId+"/active");
 
         accountRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
                 assertNext(account1 -> {
@@ -241,7 +239,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<Map> result = client.get().uri("/accounts/activate/" + authenticationId+"/mysecret")
+        EntityExchangeResult<Map> result = client.get().uri("/accounts/" + authenticationId+"/active/mysecret")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -262,7 +260,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<Map> result = client.get().uri("/accounts/activate/" + authenticationId+"/myecret")
+        EntityExchangeResult<Map> result = client.get().uri("/accounts/" + authenticationId+"/active/myecret")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -275,7 +273,7 @@ public class AccountRestServiceTest {
         final String authenticationId = "activateAccounttest";
 
         LOG.info("activate account for userId: {}", id);
-        EntityExchangeResult<Map> result  = client.get().uri("/accounts/activate/" + authenticationId+"/secret")
+        EntityExchangeResult<Map> result  = client.get().uri("/accounts/" + authenticationId+"/active/secret")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         assertThat(result.getResponseBody().get("error")).isEqualTo("No account with authenticationId");
@@ -349,7 +347,52 @@ public class AccountRestServiceTest {
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailactivationlink/"+emailTo)
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/active/email/"+emailTo+"/password-secret")
+                .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody().get("message")) ;
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+
+        request = mockWebServer.takeRequest();
+        LOG.info("assert the path for authenticate was created using path '/create'");
+        assertThat(request.getPath()).startsWith("/emails");
+
+        //the body is empty for some reason.
+        String body = new String(request.getBody().getBuffer().readByteArray());
+        LOG.info("path: {}", request.getPath());
+        LOG.info("request: {}", body);
+    }
+    @Test
+    public void emailActivationLinkNoAcount() {
+        String emailTo = "emailActivationLinkWithNoAccount@sonam.co";
+
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/active/email/"+emailTo+"/password-secret")
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        assertThat(result.getResponseBody().get("error")).isEqualTo("no account with email");
+        LOG.info("response: {}", result.getResponseBody().get("error")) ;
+    }
+    @Test
+    public void emailActivationLinkUsingEmail() throws InterruptedException {
+        String emailTo = "emailActivationLink@sonam.co";
+
+        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+        final String emailMsg = " {\"message\":\"email successfully sent\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
+
+
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/active/email/"+emailTo+"/password-secret")
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message")) ;
@@ -372,10 +415,10 @@ public class AccountRestServiceTest {
      * Test for sending email activation link when there is No Account in Account repository
      */
     @Test
-    public void emailActivationLinkNoAcount() {
+    public void emailActivationLinkNoAcountUsingEmail() {
         String emailTo = "emailActivationLinkWithNoAccount@sonam.co";
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailactivationlink/"+emailTo)
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/active/email/"+emailTo+"/password-secret")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         assertThat(result.getResponseBody().get("error")).isEqualTo("no account with email");
@@ -410,7 +453,7 @@ public class AccountRestServiceTest {
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
-        Flux<Map> mapFlux = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
+        Flux<Map> mapFlux = webTestClient.put().uri("/accounts/email/"+emailTo+"/password-secret")
                 .exchange().expectStatus().isOk().returnResult(Map.class).getResponseBody();
 
         RecordedRequest request = mockWebServer.takeRequest();
@@ -439,7 +482,7 @@ public class AccountRestServiceTest {
     public void emailMySecretForPasswordResetNoAccount() throws InterruptedException {
         String emailTo = "emailActivationLink@sonam.co";
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailmysecret/" + emailTo)
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/" + emailTo+"/password-secret")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -454,7 +497,7 @@ public class AccountRestServiceTest {
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/emailmysecret/"+emailTo)
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/"+emailTo+"/password-secret")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -729,7 +772,7 @@ public class AccountRestServiceTest {
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/authenticationId/"+emailTo)
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/"+emailTo+"/authentication-id")
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
@@ -749,7 +792,7 @@ public class AccountRestServiceTest {
         String emailTo = "sendAuthenticationId@sonam.co";
         String authId = "sendAuthenticationId";
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/authenticationId/"+emailTo)
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/"+emailTo+"/authentication-id")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -759,6 +802,12 @@ public class AccountRestServiceTest {
     @Test
     public void validateSecret() {
         final String authId = "createAccountWithExistingEmail";
+
+        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now());
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
+
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
@@ -766,7 +815,7 @@ public class AccountRestServiceTest {
         LOG.info("put validate secret");
 
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/validate/secret/" + authId + "/" + "123hello")
+        EntityExchangeResult<Map> result = webTestClient.get().uri("/accounts/" + account.getEmail() + "/password-secret/" + "123hello")
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
@@ -776,6 +825,10 @@ public class AccountRestServiceTest {
     @Test
     public void validateSecretNotMatch() {
         final String authId = "createAccountWithExistingEmail";
+        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now());
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
@@ -783,7 +836,7 @@ public class AccountRestServiceTest {
         LOG.info("put validate secret");
 
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/validate/secret/" + authId + "/" + "123hell")
+        EntityExchangeResult<Map> result = webTestClient.get().uri("/accounts/" + account.getEmail() + "/password-secret/" + "123hell")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -793,6 +846,10 @@ public class AccountRestServiceTest {
     @Test
     public void validateSecretExpired() {
         final String authId = "createAccountWithExistingEmail";
+        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now());
+
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
@@ -800,7 +857,7 @@ public class AccountRestServiceTest {
         LOG.info("put validate secret");
 
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/validate/secret/" + authId + "/" + "123hello")
+        EntityExchangeResult<Map> result = webTestClient.get().uri("/accounts/" + account.getEmail() + "/password-secret/" + "123hello")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
