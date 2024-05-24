@@ -58,6 +58,9 @@ public class UserAccountService implements UserAccount {
     @Value("${auth-manager-app}")
     private String authManagerAppUrl;
 
+    @Value("${passwordResetPath}")
+    private String passwordResetPath;
+
     @Autowired
     private AccountRepository accountRepository;
 
@@ -206,10 +209,16 @@ public class UserAccountService implements UserAccount {
                         LOG.info("passwordSecret created");
                         return passwordSecretRepository.save(passwordSecret);
                     })
-                    .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
-                            .append(accountActivateLink).append("/").append(account.getAuthenticationId())
-                            .append("/").append(passwordSecret.getSecret())
-                            .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
+                    .map(passwordSecret -> {
+                        LOG.info("before replace: {}", accountActivateLink);
+                        String endpoint = accountActivateLink.replace("{authenticationId}", account.getAuthenticationId())
+                                .replace("{secret}", passwordSecret.getSecret());
+                        LOG.info("accountActiveLink: {}", endpoint);
+                        return new StringBuilder(emailBody).append(" ")
+                                .append(endpoint)
+                                .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
+
+                    })
                     .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(account.getAuthenticationId())
                             .switchIfEmpty(Mono.error(new AccountException("no account with email")))
                             .zipWith(Mono.just(stringBuilder)))
@@ -247,10 +256,14 @@ public class UserAccountService implements UserAccount {
                     LOG.info("passwordSecret created");
                     return passwordSecretRepository.save(passwordSecret);
                 })
-                .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
-                        .append(accountActivateLink).append("/").append(authId)
-                        .append("/").append(passwordSecret.getSecret())
-                        .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
+                .map(passwordSecret -> {
+                    LOG.info("before replace: {}", accountActivateLink);
+                    String endpoint = accountActivateLink.replace("{authenticationId}", authId)
+                            .replace("{secret}", passwordSecret.getSecret());
+                    LOG.info("accountActiveLink: {}", accountActivateLink);
+                    return new StringBuilder(emailBody).append(" ").append(endpoint)
+                            .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
+                })
                 .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(authId)
                         .switchIfEmpty(Mono.error(new AccountException("no account with email")))
                         .zipWith(Mono.just(stringBuilder)))
@@ -278,8 +291,12 @@ public class UserAccountService implements UserAccount {
                 return passwordSecretRepository.deleteById(passwordSecret.getAuthenticationId())
                     .then(passwordSecretRepository.save(passwordSecret));
             })
-            .map(passwordSecret -> new StringBuilder("You new secret is: " + passwordSecret.getSecret())
-            .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
+            .map(passwordSecret -> {
+                String endpoint = passwordResetPath.replace("{email}", account.getEmail()).replace("{secret}", passwordSecret.getSecret());
+
+                return new StringBuilder("Please click on this link to initiate password change: " + endpoint)
+                        .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
+            })
             .flatMap(stringBuilder -> accountRepository.findByAuthenticationId(account.getAuthenticationId())
             .switchIfEmpty(Mono.error(new AccountException("no account with email")))
             .zipWith(Mono.just(stringBuilder)))
