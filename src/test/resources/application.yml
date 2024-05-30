@@ -119,3 +119,8 @@ jwtrequest:
 
 
 auth-manager-app: http://localhost:9093
+
+ISSUER_ADDRESS: http://api-gateway:9001
+# ISSUER_URI here is used for pulling the public certs from authorization-server for token validation
+ISSUER_URI: ${ISSUER_ADDRESS}/issuer
+passwordResetPath: ${ISSUER_URI}/password/{email}/{secret}
