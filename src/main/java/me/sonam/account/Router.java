@@ -27,7 +27,7 @@ public class Router {
                         .and(accept(MediaType.APPLICATION_JSON)), handler::isAccountActive)
 
                 // user will click a link from their inbox that contains a url pointing this
-                // endpoint to activate such as 'http://api-gateway:8080/accounts/activate/test6/r5DFO6SFx2'
+                // endpoint to activate such as 'http://api-gateway:8080/accounts/test6/active/r5DFO6SFx2'
                 .andRoute(GET("/accounts/{authenticationId}/active/{secret}")
                     .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount)
 

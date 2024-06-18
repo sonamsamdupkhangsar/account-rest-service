@@ -368,8 +368,8 @@ public class UserAccountService implements UserAccount {
                     return passwordSecretRepository.save(passwordSecret);
                 })
                 .map(passwordSecret -> new StringBuilder(emailBody).append(" ")
-                        .append(accountActivateLink).append("/").append(authenticationId)
-                        .append("/").append(passwordSecret.getSecret())
+                        .append(accountActivateLink.replace("{authenticationId}", authenticationId)
+                                .replace("{secret}", passwordSecret.getSecret()))
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
                 .flatMap(stringBuilder -> email(email,"Activation link", stringBuilder.toString()))
                 .then(Mono.just("Account created successfully.  Check email for activating account"));
