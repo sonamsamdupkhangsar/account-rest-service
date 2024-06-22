@@ -158,6 +158,11 @@ public class AccountRestServiceTest {
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("PUT");
         assertThat(request.getPath()).isEqualTo("/authentications/noauth/password");
+
+        StepVerifier.create(passwordSecretRepository.existsById(passwordSecret.getAuthenticationId())).assertNext(aBoolean -> {
+            LOG.info("assert that passwordSecret with authId does not exists: {}", aBoolean);
+            assertThat(aBoolean).isFalse();
+        }).verifyComplete();
     }
 
     /**

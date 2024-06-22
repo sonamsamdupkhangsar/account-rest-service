@@ -505,22 +505,26 @@ public class UserAccountService implements UserAccount {
                     //return validateEmailLoginSecret(account.getEmail(), secret);
                     return validateEmailLoginSecret(account, secret);
                 })
-                .map(map -> {
-                    LOG.info("delete passwordSecret by authenticationId after success validation of secret");
-                    return passwordSecretRepository.deleteById(account.getAuthenticationId());
-                }).flatMap(voidMono -> {
-                            WebClient.ResponseSpec responseSpec = webClientBuilder.build().put().uri(updateAuthenticationNoAuthPassword)
+                .flatMap(map2 -> {
+
+                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().put().uri(updateAuthenticationNoAuthPassword)
                                     .bodyValue(Map.of("authenticationId", account.getAuthenticationId(),
                                             "password", password))
                                     .retrieve();
 
-                            return  responseSpec.bodyToMono(Map.class).flatMap(map -> {
-                                LOG.info("response from authentication-rest-service is {}", map.get("message"));
-                                return Mono.just(map.get("message").toString());
-                            }).onErrorResume(throwable -> {
-                                LOG.error("password updated failed when calling authentication-rest-service {}", throwable.getMessage());
-                                return Mono.error(new AccountException("Password update failed: " + throwable.getMessage()));
-                            });
+                    return  passwordSecretRepository.deleteById(account.getAuthenticationId())
+                                    .then(
+                                            responseSpec.bodyToMono(Map.class).flatMap(map -> {
+                                                LOG.info("response from authentication-rest-service is {}",
+                                                        map.get("message"));
+                                                return Mono.just(map.get("message").toString());
+                                            }).onErrorResume(throwable -> {
+                                                LOG.error("password updated failed when calling authentication-rest-service {}",
+                                                        throwable.getMessage());
+                                                return Mono.error(new AccountException("Password update failed: "
+                                                        + throwable.getMessage()));
+                                            })
+                                    );
                         }
                 );
     }
