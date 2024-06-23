@@ -17,6 +17,9 @@ public interface AccountRepository extends ReactiveCrudRepository<Account, UUID>
     Mono<Boolean> existsByAuthenticationId(String var1);
     Mono<Boolean> existsByEmail(String email);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String var1);
+    Mono<Boolean> existsByEmailAndActiveTrue(String emailAddress);
+
+    Mono<Account> findByEmailAndActiveTrue(String email);
     Mono<Account> findByAuthenticationId(String authenticationId);
     Mono<Integer> countByAuthenticationId(String authenticationId);
     Mono<Account> findByEmail(String email);

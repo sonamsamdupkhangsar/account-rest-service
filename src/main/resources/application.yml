@@ -35,12 +35,12 @@ spring:
 
 user-rest-service:
     root: http://user-rest-service
-    activate: /users/activate/
+    activate: /users/{authenticationId}/active
     delete: /users/
 
 authentication-rest-service:
   root: http://authentication-rest-service
-  activate: /authentications/activate/
+  activate: /authentications/{authenticationId}/active
   delete: /authentications/
   update-no-auth-password: /authentications/noauth/password
 
@@ -50,23 +50,25 @@ email-rest-service:
 
 account-rest-service:
   root: ${API_GATEWAY}
-  activate: /accounts/activate
+  activate: /accounts/{authenticationId}/active/{secret}
 
 auth-server:
   root: http://authorization-server/issuer
   oauth2token:
     path: /oauth2/token
-    params: ?grant_type=client_credentials
+    grantType: client_credentials
 
 emailFrom: ${EMAIL_FROM}
 emailBody: Please click on this link to activate your account
 secretExpire: 2
 
+passwordResetPath: ${ISSUER_URI}/password/{email}/{secret}
+
 permitpath:
   - path: /accounts/api/health/*
   - path: /accounts/active/*/*
     httpMethods: GET
-  - path: /accounts/activate/*/*
+  - path: /accounts/*/active/*
     httpMethods: GET
   - path: /accounts/emailactivationlink/*
     httpMethods: PUT
@@ -104,13 +106,21 @@ jwtrequest:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+  - in: /accounts/active/email-link/(.)*
+    out: /emails
+    accessToken:
+      option: forward
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/(.)*/(.)*
     out: /emails
     accessToken:
       option: forward
-  - in: /accounts/activate/(.)*/(.)*
-    out: /users/activate/(.)*
+  - in: /accounts/(.)*/active/(.)*
+    out: /users/(.)*/active
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+
+auth-manager-app: ${AUTH_MANAGER_APP_URL}
