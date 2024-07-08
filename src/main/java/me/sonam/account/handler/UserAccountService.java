@@ -273,8 +273,8 @@ public class UserAccountService implements UserAccount {
 
     @Override
     public Mono<String> emailMySecretUsingEmail(ServerRequest serverRequest) {
-        LOG.info("email my secret for password reset");
         String email = serverRequest.pathVariable("email");
+        LOG.info("email my secret for password reset for email: {}", email);
 
         return accountRepository.findByEmailAndActiveTrue(email)
                 .switchIfEmpty(Mono.error(new AccountException("Account is not active or does not exist")))
