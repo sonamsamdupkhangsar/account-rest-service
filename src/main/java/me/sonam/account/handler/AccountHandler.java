@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 /**
@@ -118,7 +120,10 @@ public class AccountHandler implements Handler {
     public Mono<ServerResponse> validateEmailLoginSecret(ServerRequest serverRequest) {
         LOG.info("validate login secret");
 
-        String email = serverRequest.pathVariable("email"); //"authenticationId");
+        String urlEncodedEmail = serverRequest.pathVariable("email"); //"authenticationId");
+        String email = URLDecoder.decode(urlEncodedEmail, Charset.defaultCharset());
+        LOG.info("urlEncodedEmail: {}, email {}", urlEncodedEmail, email);
+
         String secret = serverRequest.pathVariable("secret");
 
         return userAccount.validateEmailLoginSecret(email, secret).flatMap(s ->
