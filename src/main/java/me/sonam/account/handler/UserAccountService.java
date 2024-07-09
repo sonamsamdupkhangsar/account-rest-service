@@ -16,6 +16,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -185,9 +188,9 @@ public class UserAccountService implements UserAccount {
 
     @Override
     public Mono<String> emailActivationLinkUsingEmail(ServerRequest serverRequest) {
-        LOG.info("email Activation link");
-
-        String email = serverRequest.pathVariable("email");
+        String urlEncodedEmail = serverRequest.pathVariable("email");
+        String email = URLDecoder.decode(urlEncodedEmail, Charset.defaultCharset());
+        LOG.info("email activation link for {}", email);
 
         return accountRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new AccountException("no account with email")))
@@ -274,9 +277,11 @@ public class UserAccountService implements UserAccount {
     @Override
     public Mono<String> emailMySecretUsingEmail(ServerRequest serverRequest) {
         String email = serverRequest.pathVariable("email");
-        LOG.info("email my secret for password reset for email: {}", email);
 
-        return accountRepository.findByEmailAndActiveTrue(email)
+        String urlDecodedEmail = URLDecoder.decode(email, Charset.defaultCharset());
+        LOG.info("urlDecodedEmail: {}, email: {}", urlDecodedEmail, email);
+
+        return accountRepository.findByEmailAndActiveTrue(urlDecodedEmail)
                 .switchIfEmpty(Mono.error(new AccountException("Account is not active or does not exist")))
                 .flatMap(this::emailSecret);
     }
@@ -292,7 +297,7 @@ public class UserAccountService implements UserAccount {
                     .then(passwordSecretRepository.save(passwordSecret));
             })
             .map(passwordSecret -> {
-                String endpoint = passwordResetPath.replace("{email}", account.getEmail()).replace("{secret}", passwordSecret.getSecret());
+                String endpoint = passwordResetPath.replace("{email}", URLEncoder.encode(account.getEmail(), Charset.defaultCharset())).replace("{secret}", passwordSecret.getSecret());
 
                 return new StringBuilder("Please click on this link to initiate password change: " + endpoint)
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
@@ -377,9 +382,10 @@ public class UserAccountService implements UserAccount {
 
     @Override
     public Mono<String> sendAuthenticationId(ServerRequest serverRequest) {
-        LOG.info("send login id or authenticationId");
-        String email = serverRequest.pathVariable("email");
+        String urlEncodedEmail = serverRequest.pathVariable("email");
 
+        String email = URLDecoder.decode(urlEncodedEmail, Charset.defaultCharset());
+        LOG.info("send login-id for email: {}, urlEncodedEmail: {}", email, urlEncodedEmail);
         Mono<Account> accountMono = accountRepository.findByEmail(email);
 
         return accountMono
@@ -395,7 +401,7 @@ public class UserAccountService implements UserAccount {
     //authId/passwordsecret
     @Override
     public Mono<String> validateEmailLoginSecret(String email, String secret) {
-        LOG.info("validate email login secret");
+        LOG.info("validate email login secret for email: {}", email);
 
         return accountRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new AccountException("no account found with email")))
@@ -422,11 +428,12 @@ public class UserAccountService implements UserAccount {
     @Override
     public Mono<String> delete(ServerRequest serverRequest) {
         LOG.info("delete accounts where the passwordsecret have expired more than 1 day and that are not active");
-        String email = serverRequest.pathVariable("email");
+        String urlEncodedEmail = serverRequest.pathVariable("email");
+        final String email = URLDecoder.decode(urlEncodedEmail, Charset.defaultCharset());
 
         return accountRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new AccountException("no account with email")))
-                .map(account -> account.getAuthenticationId())
+                .map(Account::getAuthenticationId)
                 .flatMap(authenticationId ->
                         passwordSecretRepository.findById(authenticationId)
                         .switchIfEmpty(Mono.error(new AccountException("no passwordSecret with authenticationId")))

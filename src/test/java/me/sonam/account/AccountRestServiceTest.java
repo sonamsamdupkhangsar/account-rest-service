@@ -35,6 +35,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -777,7 +779,9 @@ public class AccountRestServiceTest {
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/"+emailTo+"/authentication-id")
+        String urlEncodedEmail = URLEncoder.encode(emailTo, Charset.defaultCharset());
+
+        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/email/"+urlEncodedEmail+"/authentication-id")
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
