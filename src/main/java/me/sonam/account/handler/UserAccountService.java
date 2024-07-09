@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
 
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -296,7 +297,7 @@ public class UserAccountService implements UserAccount {
                     .then(passwordSecretRepository.save(passwordSecret));
             })
             .map(passwordSecret -> {
-                String endpoint = passwordResetPath.replace("{email}", account.getEmail()).replace("{secret}", passwordSecret.getSecret());
+                String endpoint = passwordResetPath.replace("{email}", URLEncoder.encode(account.getEmail(), Charset.defaultCharset())).replace("{secret}", passwordSecret.getSecret());
 
                 return new StringBuilder("Please click on this link to initiate password change: " + endpoint)
                         .append("\nMessage sent at UTC time: ").append(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
