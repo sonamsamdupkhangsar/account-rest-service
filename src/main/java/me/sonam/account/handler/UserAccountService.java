@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -23,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 
 public class UserAccountService implements UserAccount {
@@ -346,6 +350,7 @@ public class UserAccountService implements UserAccount {
     public Mono<String> createAccount(ServerRequest serverRequest) {
         String authenticationId = serverRequest.pathVariable("authenticationId");
         String email = serverRequest.pathVariable("email");
+        UUID userId = UUID.fromString(serverRequest.pathVariable("userId"));
 
         LOG.info("create account with authenticationId: {} and email: {}", authenticationId, email);
 
@@ -356,7 +361,7 @@ public class UserAccountService implements UserAccount {
                 .flatMap(integer -> accountRepository.existsByEmail(email))
                 .filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new AccountException("a user with this email already exists")))
-                .flatMap(integer -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime())))
+                .flatMap(integer -> Mono.just(new Account(authenticationId, email, false, ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime(), userId)))
                 .flatMap(account -> accountRepository.save(account))
                 .flatMap(account -> {
                     LOG.info("delete from passwordSecret repo if there is any: {}", authenticationId);
@@ -498,6 +503,32 @@ public class UserAccountService implements UserAccount {
         return accountRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new AccountException("there is no account with the given email")))
                 .flatMap(account -> updateAuthenticationPassword(account, secret, password));
+    }
+
+    @Override
+    public Mono<String> deleteMyData() {
+        LOG.info("delete my dataData");
+        ReactiveSecurityContextHolder.getContext().subscribe(securityContext -> LOG.info("securityContext principal: {}",
+                securityContext.getAuthentication()));
+
+        return
+                ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
+            LOG.info("principal: {}", securityContext.getAuthentication().getPrincipal());
+            Authentication authentication = securityContext.getAuthentication();
+
+            LOG.info("authentication: {}", authentication);
+            LOG.info("authentication.principal: {}", authentication.getPrincipal());
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String userIdString = jwt.getClaim("userId");
+            LOG.info("delete user data for userId: {}", userIdString);
+
+
+            UUID userId = UUID.fromString(userIdString);
+            return accountRepository.findByUserId(userId).
+                    flatMap(account -> accountRepository.deleteByUserId(userId)
+                            .then(passwordSecretRepository.deleteByAuthenticationId(account.getAuthenticationId()))
+                    ).thenReturn("account deleted with userid");
+        });
     }
 
     private Mono<String> updateAuthenticationPassword(Account account, String secret, final String password) {

@@ -49,6 +49,7 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:okhttp:4.0.1'
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.0.1'
     compileOnly 'org.projectlombok:lombok:1.18.20'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.withType(JavaCompile) {

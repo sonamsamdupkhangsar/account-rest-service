@@ -41,7 +41,7 @@ public class AccountRepositoryTests {
     public void getAllAccounts() {
         UUID userId = UUID.randomUUID();
         String email = "getAllAccounts@sonam.me";
-        Account account = new Account(email, email, false, LocalDateTime.now());
+        Account account = new Account(email, email, false, LocalDateTime.now(), userId);
 
         R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
         template.insert(Account.class).using(account).then().as(StepVerifier::create).verifyComplete();
@@ -58,7 +58,8 @@ public class AccountRepositoryTests {
     @Test
     public void updateAccount() {
         String email = "updateAccount@sonam.me";
-        Account account = new Account(email, email, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(email, email, false, LocalDateTime.now(), userId);
 
         R2dbcEntityTemplate template = new R2dbcEntityTemplate(databaseClient, H2Dialect.INSTANCE);
         template.insert(Account.class).using(account).then().as(StepVerifier::create).verifyComplete();

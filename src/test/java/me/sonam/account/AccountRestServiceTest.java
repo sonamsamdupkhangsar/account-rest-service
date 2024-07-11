@@ -20,11 +20,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -47,6 +48,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 
 @EnableAutoConfiguration
@@ -68,8 +70,7 @@ public class AccountRestServiceTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
-    private ReactiveJwtDecoder jwtDecoder;
+
     private static MockWebServer mockWebServer;
 
     private static String emailEndpoint = "http://localhost:{port}";
@@ -135,8 +136,9 @@ public class AccountRestServiceTest {
     public void accountAuthenticationPasswordUpdate() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
+        UUID userId = UUID.randomUUID();
 
-        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", true, LocalDateTime.now());
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", true, LocalDateTime.now(), userId);
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in faltruese active state"));
 
@@ -175,8 +177,8 @@ public class AccountRestServiceTest {
     public void accountAuthenticationPasswordUpdateAccountNotActive() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
-
-        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now(), userId);
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in false active state"));
 
@@ -198,8 +200,8 @@ public class AccountRestServiceTest {
     public void activateAccount() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
-
-        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now(), userId);
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in false active state"));
 
@@ -236,8 +238,8 @@ public class AccountRestServiceTest {
     public void activateAccountExpiredPassword() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
-
-        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now(), userId);
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in active state"));
 
@@ -257,8 +259,8 @@ public class AccountRestServiceTest {
     public void activateAccountBadSecret() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccounttest";
-
-        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authenticationId, "activateAccount.test@sonam.email", false, LocalDateTime.now(), userId);
         accountRepository.save(account)
                 .subscribe(account1 -> LOG.info("Saved account in active state"));
 
@@ -291,8 +293,8 @@ public class AccountRestServiceTest {
     public void testAccountDuplicatesWhenNewFlagTrue() {
         LOG.info("testing count of unique rows when saving account multiple times");
         String email = "sonam@sonam.me";
-
-        Account account = new Account(email, email, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(email, email, true, LocalDateTime.now(), userId);
         Mono<Account> accountMono = accountRepository.save(account);
         LOG.info("saved account with newFlag once with email: {}", email);
         accountMono.subscribe(account1 -> LOG.info("account: {}", account1));
@@ -301,7 +303,8 @@ public class AccountRestServiceTest {
                 .assertNext(count ->  {LOG.info("count now is: {}", count); assertThat(count).isEqualTo(1);})
                 .verifyComplete();
 
-        account = new Account(email, email, true, LocalDateTime.now());
+
+        account = new Account(email, email, true, LocalDateTime.now(), userId);
         accountMono = accountRepository.save(account);
         LOG.info("saved account with newFlag twice with userId: {}", email);
         accountMono.subscribe(account1 -> LOG.info("account: {}", account1));
@@ -316,7 +319,8 @@ public class AccountRestServiceTest {
 
         LOG.info("testing count of unique rows when saving account multiple times");
         String email = "sonam@sonam.me";
-        Account account = new Account(email, email, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(email, email, true, LocalDateTime.now(), userId);
         Mono<Account> accountMono = accountRepository.save(account);
         LOG.info("saved account with newFlag once with email: {}", email);
         accountMono.subscribe(account1 -> LOG.info("account1: {}", account1));
@@ -340,8 +344,8 @@ public class AccountRestServiceTest {
     @Test
     public void emailActivationLink() throws InterruptedException {
         String emailTo = "emailActivationLink@sonam.co";
-
-        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         final String clientCredentialResponse = "{" +
                 "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
@@ -385,8 +389,8 @@ public class AccountRestServiceTest {
     @Test
     public void emailActivationLinkUsingEmail() throws InterruptedException {
         String emailTo = "emailActivationLink@sonam.co";
-
-        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         final String clientCredentialResponse = "{" +
                 "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
@@ -435,8 +439,8 @@ public class AccountRestServiceTest {
     @Test
     public void emailMySecretForPasswordReset() throws Exception {
         String emailTo = "emailActivationLink@sonam.co";
-
-        Account account = new Account(emailTo, emailTo, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(emailTo, emailTo, true, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
         LOG.info("request email secret");
@@ -499,8 +503,8 @@ public class AccountRestServiceTest {
     @Test
     public void emailMySecretForPasswordResetAccountNotActive() {
         String emailTo = "emailMySecretForPasswordResetAccountNotActive@sonam.co";
-
-        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(emailTo, emailTo, false, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -562,8 +566,8 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingAuthIdAndEmail() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccount@sonam.co";
-
-        Account account = new Account(authId, emailTo, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, emailTo, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
         LOG.info("try to POST with the same email/authId");
@@ -598,7 +602,8 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingAuthIdActiveFalse() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccount@sonam.co";
-        Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", false, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         final String clientCredentialResponse = "{" +
@@ -636,7 +641,8 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingAuthIdActiveTrue() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccount@sonam.co";
-        Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, "createAccountWithExistingAuthId@sonam.co", true, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -654,7 +660,8 @@ public class AccountRestServiceTest {
     public void createAccountWithNewAuthIdWithExistingEmail() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccount@sonam.co";
-        Account account = new Account(authId, emailTo, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, emailTo, true, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -680,8 +687,8 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingAuthIdButNewEmailAndActiveFalse() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String email = "createAccount@sonam.co";
-
-        Account account = new Account(authId, email, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         LOG.info("try to POST with the same email/authId");
 
         final String clientCredentialResponse = "{" +
@@ -727,8 +734,8 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingAuthIdButNewEmailAndActiveTrue() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String email = "createAccount@sonam.co";
-
-        Account account = new Account(authId, email, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, true, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
         final String newEmail = "createAccountWithExistingAuthIdButNewEmailAndActiveFalse@sonam.co";
@@ -744,7 +751,8 @@ public class AccountRestServiceTest {
     public void createAccountWithExistingEmailAndActiveTrue() throws InterruptedException {
         String authId = "createAccountWithExistingAuthId";
         String emailTo = "createAccountWithExistingEmailAndActive@sonam.email";
-        Account account = new Account(authId, emailTo, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, emailTo, true, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -763,8 +771,8 @@ public class AccountRestServiceTest {
     public void sendAuthenticationId() throws InterruptedException {
         String emailTo = "sendAuthenticationId@sonam.co";
         String authId = "sendAuthenticationId";
-
-        Account account = new Account(authId, emailTo, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, emailTo, true, LocalDateTime.now(), userId);
 
         final String clientCredentialResponse = "{" +
                 "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
@@ -811,8 +819,8 @@ public class AccountRestServiceTest {
     @Test
     public void validateSecret() {
         final String authId = "createAccountWithExistingEmail";
-
-        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -834,7 +842,8 @@ public class AccountRestServiceTest {
     @Test
     public void validateSecretNotMatch() {
         final String authId = "createAccountWithExistingEmail";
-        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -855,7 +864,8 @@ public class AccountRestServiceTest {
     @Test
     public void validateSecretExpired() {
         final String authId = "createAccountWithExistingEmail";
-        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, "sonam@sonam.cloud", true, LocalDateTime.now(), userId);
 
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
 
@@ -880,8 +890,8 @@ public class AccountRestServiceTest {
 
         Jwt jwt = jwt(authId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        Account account = new Account(authId, email, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
 
@@ -906,8 +916,8 @@ public class AccountRestServiceTest {
 
         Jwt jwt = jwt(authId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        Account account = new Account(authId, email, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         PasswordSecret passwordSecret = new PasswordSecret("no-corresponding-id", "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
 
@@ -932,8 +942,8 @@ public class AccountRestServiceTest {
 
         Jwt jwt = jwt(authId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        Account account = new Account(authId, email, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("user deleted"));
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("authentication deleted"));
 
@@ -972,8 +982,8 @@ public class AccountRestServiceTest {
 
         Jwt jwt = jwt(authId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        Account account = new Account(authId, email, false, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
 
@@ -997,8 +1007,8 @@ public class AccountRestServiceTest {
 
         Jwt jwt = jwt(authId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        Account account = new Account(authId, email, true, LocalDateTime.now());
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, true, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
 
@@ -1011,6 +1021,39 @@ public class AccountRestServiceTest {
         LOG.info("response: {}", result.getResponseBody().get("error"));
 
         assertThat(result.getResponseBody().get("error")).isEqualTo("account is active, can't delete");
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+    }
+  //  @MockBean
+    private ReactiveJwtDecoder jwtDecoder;
+
+    private final String tokenValue ="";
+   // @WithMockCustomUser(token = tokenValue, userId = "5d8de63a-0b45-4c33-b9eb-d7fb8d662107", username = "user@sonam.cloud", password = "password", role = "ROLE_USER")
+
+    @WithMockUser
+    @Test
+    public void deleteMyData() throws InterruptedException {
+        String email = "deleteWithPasswordSecretExpiredAndAccountActiveTrue@sonam.co";
+        String authId = "deleteWithPasswordSecretExpiredAndAccountActiveTrue";
+
+        Jwt jwt = jwt(authId);
+      //  when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+        UUID userId = UUID.randomUUID();
+        Account account = new Account(authId, email, true, LocalDateTime.now(), userId);
+        accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
+        PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
+
+        passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
+
+
+        EntityExchangeResult<Map<String, String>> result = webTestClient.mutateWith(mockJwt()).delete().uri("/accounts/delete")
+                /*.headers(addJwt(jwt))*/.exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference
+                        <Map<String, String>>(){}).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody().get("message"));
+
+        assertThat(result.getResponseBody().get("error")).isEqualTo("account deleted with userid");
+
         passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
         accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
     }

@@ -40,7 +40,7 @@ public class Router {
                         .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecretUsingEmail)
 
 
-                .andRoute(POST("/accounts/{authenticationId}/{email}")
+                .andRoute(POST("/accounts/{userId}/{authenticationId}/{email}")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::createAccount)
 
                 // called by authorization server
@@ -58,22 +58,10 @@ public class Router {
                 // authorization server will call this endpoint to update password
                 .andRoute(PUT("/accounts/password-secret")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::updateAuthenticationPassword)
-
-                /*.andRoute(PUT("/accounts/validate/secret/{authenticationId}/{secret}")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::validateEmailLoginSecret)
-*/
+                .andRoute(DELETE("/accounts/delete")
+                        .and(accept(MediaType.APPLICATION_JSON)), handler::deleteMyData);
 
 
-
-                //.andRoute(PUT("/accounts/authentications/password")
-
-/*
-                .andRoute(PUT("/accounts/email/{authenticationId}")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailActivationLink)
-
-                .andRoute(PUT("/accounts/emailmysecret/{authenticationId}")
-                        .and(accept(MediaType.APPLICATION_JSON)), handler::emailMySecret) //part of forgot password process
-*/;
 
     }
 }

@@ -164,4 +164,16 @@ public class AccountHandler implements Handler {
                     return ServerResponse.badRequest().bodyValue(Map.of("error", e.getMessage()));
                 });
     }
+
+    @Override
+    public Mono<ServerResponse> deleteMyData(ServerRequest serverRequest) {
+        LOG.info("delete my data for logged-in user");
+        return userAccount.deleteMyData()
+                .flatMap(s ->
+                        ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(Map.of("message", s)))
+                .onErrorResume(e -> {
+                    LOG.warn("deleted my data data call failed, error: {}", e.getMessage());
+                    return ServerResponse.badRequest().bodyValue(Map.of("error", e.getMessage()));
+                });
+    }
 }
