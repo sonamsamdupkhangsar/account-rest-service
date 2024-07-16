@@ -29,8 +29,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
 import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 @EnableAutoConfiguration
@@ -76,16 +77,18 @@ public class DeleteMyDataIntegTest {
 
         final String accessToken = "eyJraWQiOiI5NmM2ZmEwZS1kZWE3LTRmOGMtYTc0MS1jMDA5ZjAzOWFkMjYiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImF1ZCI6ImI0ZGZlM2ZiLTE2OTItNDRiOC05MmFiLTM2NmNjYzg0YjUzOS1hdXRoem1hbmFnZXIiLCJuYmYiOjE3MjA3MzM1OTgsInNjb3BlIjpbIm9wZW5pZCIsInByb2ZpbGUiXSwiaXNzIjoiaHR0cDovL2FwaS1nYXRld2F5OjkwMDEvaXNzdWVyIiwiZXhwIjoxNzIwNzM0Nzk4LCJ1c2VyUm9sZSI6WyJVU0VSX1JPTEUiXSwiaWF0IjoxNzIwNzMzNTk4LCJ1c2VySWQiOiJkNmNlYTdhMS05NTcxLTRiNmItODc4Yy0wY2MxNjEzNDAwMmEiLCJqdGkiOiIwYTcxMjhiYi0xMDQ0LTQ0ZjktOTVhMC1iNzMzMGExMTQ3ZmEifQ.ITRIz6TgLIDRqAB7dFtp4qudx_m-6O7rUtCkDAp6Ebbl68G8qRwj8oHUjduW-AEkcOiYts7cYV_5bK2McjLcabaYYnfulAM6h8h98NiS8Uwm7KkqWGz7DkJRz_dp50yC0H4MMeKzlxjpPA0KPgBEPzotN7oYzqRmtHdsMkc1YLcOAHYwyZXTGJ8H05p4YHP7_7_wZbrkzvGiX26hgUza63Nydjs-wWRQhmvOn8SKJ4-5_YBYi-V_99fShYelqCiFYeLbxfrXrv3yZ-ebM180HzRQ-1U0VB7uoySPf8O_h36Hefd-h7ypqoQhMl4WSCld3MNxfZ1qUOZCo6PNynnUYQ";
 
-
-        Jwt jwt = jwt(authId, UUID.fromString("5d8de63a-0b45-4c33-b9eb-d7fb8d662107"));
+        UUID userId = UUID.fromString("5d8de63a-0b45-4c33-b9eb-d7fb8d662107");
+        Jwt jwt = jwt(authId, userId);
         //  when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-        UUID userId = UUID.randomUUID();
+
         Account account = new Account(authId, email, true, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
+        passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+        accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
 
         EntityExchangeResult<Map<String, String>> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/delete")
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(accessToken))
@@ -94,10 +97,10 @@ public class DeleteMyDataIntegTest {
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
 
-        assertThat(result.getResponseBody().get("error")).isEqualTo("account deleted with userid");
-
         passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
         accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
+
+        assertThat(result.getResponseBody().get("message")).isEqualTo("account deleted with userid");
     }
 
 

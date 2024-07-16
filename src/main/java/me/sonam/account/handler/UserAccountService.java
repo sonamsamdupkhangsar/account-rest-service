@@ -508,8 +508,6 @@ public class UserAccountService implements UserAccount {
     @Override
     public Mono<String> deleteMyData() {
         LOG.info("delete my dataData");
-        ReactiveSecurityContextHolder.getContext().subscribe(securityContext -> LOG.info("securityContext principal: {}",
-                securityContext.getAuthentication()));
 
         return
                 ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
@@ -522,12 +520,16 @@ public class UserAccountService implements UserAccount {
             String userIdString = jwt.getClaim("userId");
             LOG.info("delete user data for userId: {}", userIdString);
 
-
             UUID userId = UUID.fromString(userIdString);
-            return accountRepository.findByUserId(userId).
-                    flatMap(account -> accountRepository.deleteByUserId(userId)
-                            .then(passwordSecretRepository.deleteByAuthenticationId(account.getAuthenticationId()))
-                    ).thenReturn("account deleted with userid");
+            return accountRepository.findByUserId(userId)
+                    .flatMap(account -> {
+                             LOG.info("got account: {}", account);
+                             return accountRepository.deleteByUserId(userId)
+                                     .doOnNext(integer -> LOG.info("deleted account with rows: {}", integer))
+                                        .flatMap(integer ->   passwordSecretRepository.deleteByAuthenticationId(account.getAuthenticationId()));
+                            }
+                    ).doOnNext(unused -> LOG.info("printing {}", unused))
+                    .thenReturn("account deleted with userid");
         });
     }
 
