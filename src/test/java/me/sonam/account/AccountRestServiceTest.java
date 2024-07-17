@@ -1063,7 +1063,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
 
-        EntityExchangeResult<Map<String, String>> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/delete")
+        EntityExchangeResult<Map<String, String>> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts")
                 /*.headers(addJwt(jwt))*/.exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference
                         <Map<String, String>>(){}).returnResult();
 

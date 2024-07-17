@@ -58,7 +58,7 @@ public class Router {
                 // authorization server will call this endpoint to update password
                 .andRoute(PUT("/accounts/password-secret")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::updateAuthenticationPassword)
-                .andRoute(DELETE("/accounts/delete")
+                .andRoute(DELETE("/accounts")
                         .and(accept(MediaType.APPLICATION_JSON)), handler::deleteMyData);
 
 
