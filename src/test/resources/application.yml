@@ -81,7 +81,7 @@ permitpath:
     httpMethods: PUT
   - path: /accounts/email/*/password-secret
     httpMethods: PUT
-  - path: /accounts/*/*
+  - path: /accounts/*/*/*
     httpMethods: POST
   - path: /accounts/email/*/authentication-id
     httpMethods: PUT

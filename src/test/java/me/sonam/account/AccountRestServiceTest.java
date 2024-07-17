@@ -7,6 +7,7 @@ import me.sonam.account.repo.entity.PasswordSecret;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,9 +48,9 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 
 @EnableAutoConfiguration
@@ -70,7 +72,19 @@ public class AccountRestServiceTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    @Autowired
+    ApplicationContext context;
 
+    @org.junit.jupiter.api.BeforeEach
+    public void setup() {
+        this.webTestClient = WebTestClient
+                .bindToApplicationContext(this.context)
+                // add Spring Security test Support
+                .apply(springSecurity())
+                .configureClient()
+                .filter(basicAuthentication("user", "password"))
+                .build();
+    }
     private static MockWebServer mockWebServer;
 
     private static String emailEndpoint = "http://localhost:{port}";
@@ -518,6 +532,7 @@ public class AccountRestServiceTest {
     @Test
     public void createAccount() throws InterruptedException {
         String emailTo = "createAccount@sonam.co";
+        UUID userId = UUID.randomUUID();
         final String clientCredentialResponse = "{" +
                 "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
                 "    \"scope\": \"message.read message.write\"," +
@@ -529,7 +544,8 @@ public class AccountRestServiceTest {
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+emailTo+"/"+emailTo)
+        EntityExchangeResult<Map> result = webTestClient.post()
+                .uri("/accounts/"+userId+"/"+emailTo+"/"+emailTo)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
@@ -582,7 +598,8 @@ public class AccountRestServiceTest {
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
+        EntityExchangeResult<Map> result = webTestClient
+                .post().uri("/accounts/"+userId+"/" + authId + "/" + emailTo)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         RecordedRequest request = mockWebServer.takeRequest();
@@ -619,7 +636,7 @@ public class AccountRestServiceTest {
 
         LOG.info("try to POST with the same email/authId");
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" +userId+"/"+ authId + "/" + emailTo)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         RecordedRequest request = mockWebServer.takeRequest();
@@ -648,7 +665,7 @@ public class AccountRestServiceTest {
 
         LOG.info("try to POST with the same email/authId");
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" + authId + "/" + emailTo)
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+userId+"/" + authId + "/" + emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
@@ -669,7 +686,7 @@ public class AccountRestServiceTest {
         final String newAuthId = "createAccountWithNewAuthIdWithExistingEmail";
 
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" + newAuthId + "/" + emailTo)
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+userId+"/" + newAuthId + "/" + emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
@@ -706,7 +723,7 @@ public class AccountRestServiceTest {
 
         final String newEmail = "createAccountWithExistingAuthIdButNewEmailAndActiveFalse@sonam.co";
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+authId+"/"+newEmail)
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+userId+"/"+authId+"/"+newEmail)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         RecordedRequest request = mockWebServer.takeRequest();
@@ -740,7 +757,7 @@ public class AccountRestServiceTest {
 
         final String newEmail = "createAccountWithExistingAuthIdButNewEmailAndActiveFalse@sonam.co";
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+authId+"/"+newEmail)
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/"+userId+"/"+authId+"/"+newEmail)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         assertThat(result.getResponseBody().get("error")).isEqualTo("Account is already active with authenticationId");
@@ -759,7 +776,7 @@ public class AccountRestServiceTest {
         LOG.info("try to POST with the same email/authId");
         String anotherId = UUID.randomUUID().toString();
 
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" + anotherId + "/" + emailTo)
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/accounts/" +userId+"/"+ anotherId + "/" + emailTo)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
 
@@ -889,7 +906,7 @@ public class AccountRestServiceTest {
         String authId = "deleteWithPasswordSecretAndAccountFalse";
 
         Jwt jwt = jwt(authId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+//        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         UUID userId = UUID.randomUUID();
         Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
@@ -897,8 +914,7 @@ public class AccountRestServiceTest {
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
-        EntityExchangeResult<Map> result = webTestClient.delete().uri("/accounts/email/"+"bogusemail@email.com")
-                .headers(addJwt(jwt))
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/email/"+"bogusemail@email.com")
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -915,7 +931,7 @@ public class AccountRestServiceTest {
         String authId = "deleteWithPasswordSecretAndAccountFalse";
 
         Jwt jwt = jwt(authId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+//        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         UUID userId = UUID.randomUUID();
         Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
@@ -923,8 +939,8 @@ public class AccountRestServiceTest {
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
-        EntityExchangeResult<Map> result = webTestClient.delete().uri("/accounts/email/"+email)
-                .headers(addJwt(jwt))
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/email/"+email)
+
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -941,7 +957,7 @@ public class AccountRestServiceTest {
         String authId = "deleteWithPasswordSecretAndAccountFalse";
 
         Jwt jwt = jwt(authId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+//        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         UUID userId = UUID.randomUUID();
         Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("user deleted"));
@@ -953,8 +969,8 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
 
-        EntityExchangeResult<Map> result = webTestClient.delete().uri("/accounts/email/"+email)
-                .headers(addJwt(jwt))
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/email/"+email)
+
                 .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
@@ -981,7 +997,7 @@ public class AccountRestServiceTest {
         String authId = "deleteWithPasswordSecretNotExpiredAndAccountFalse";
 
         Jwt jwt = jwt(authId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+//        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         UUID userId = UUID.randomUUID();
         Account account = new Account(authId, email, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
@@ -989,8 +1005,8 @@ public class AccountRestServiceTest {
 
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
-        EntityExchangeResult<Map> result = webTestClient.delete().uri("/accounts/email/"+email)
-                .headers(addJwt(jwt))
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/email/"+email)
+
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
@@ -1006,7 +1022,7 @@ public class AccountRestServiceTest {
         String authId = "deleteWithPasswordSecretExpiredAndAccountActiveTrue";
 
         Jwt jwt = jwt(authId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
         UUID userId = UUID.randomUUID();
         Account account = new Account(authId, email, true, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
@@ -1015,8 +1031,9 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
 
-        EntityExchangeResult<Map> result = webTestClient.delete().uri("/accounts/email/"+email)
-                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).
+                delete().uri("/accounts/email/"+email)
+               .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("error"));
 
@@ -1035,10 +1052,10 @@ public class AccountRestServiceTest {
     public void deleteMyData() throws InterruptedException {
         String email = "deleteWithPasswordSecretExpiredAndAccountActiveTrue@sonam.co";
         String authId = "deleteWithPasswordSecretExpiredAndAccountActiveTrue";
-
-        Jwt jwt = jwt(authId);
-      //  when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         UUID userId = UUID.randomUUID();
+        Jwt jwt = jwt(authId, userId);
+      //  when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
         Account account = new Account(authId, email, true, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
         PasswordSecret passwordSecret = new PasswordSecret(authId, "123hello", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(-1));
@@ -1046,18 +1063,23 @@ public class AccountRestServiceTest {
         passwordSecretRepository.save(passwordSecret).subscribe(account1 -> LOG.info("saved passwordsecret"));
 
 
-        EntityExchangeResult<Map<String, String>> result = webTestClient.mutateWith(mockJwt()).delete().uri("/accounts/delete")
+        EntityExchangeResult<Map<String, String>> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/accounts/delete")
                 /*.headers(addJwt(jwt))*/.exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference
                         <Map<String, String>>(){}).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message"));
 
-        assertThat(result.getResponseBody().get("error")).isEqualTo("account deleted with userid");
+        AssertionsForClassTypes.assertThat(result.getResponseBody().get("message")).isEqualTo("account deleted with userid");
+
 
         passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
         accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
     }
 
+    private Jwt jwt(String subjectName, UUID userId) {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", subjectName, "userId", userId.toString()));
+    }
 
     private Jwt jwt(String subjectName) {
         return new Jwt("token", null, null,
