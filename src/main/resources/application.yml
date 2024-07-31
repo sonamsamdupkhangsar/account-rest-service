@@ -1,6 +1,7 @@
 logging:
   level:
-    root: error
+    root: trace
+    com.nextflix: off
     me:
       sonam: info
 info:
@@ -31,7 +32,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URI}
-          audiences: ${OAUTH_AUDIENCES}
+          audiences: oauth-client, b4dfe3fb-1692-44b8-92ab-366ccc84b539-authzmanager
 
 user-rest-service:
     root: http://user-rest-service
@@ -90,30 +91,35 @@ permitpath:
 jwtrequest:
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/emailmysecret/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/active/email-link/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: forward
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/(.)*/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: forward
   - in: /accounts/(.)*/active/(.)*
