@@ -1,6 +1,6 @@
 logging:
   level:
-    root: trace
+    root: warn
     com.nextflix: off
     me:
       sonam: info
@@ -88,7 +88,7 @@ permitpath:
     scopes: message.write
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
-jwtrequest:
+requestFilters:
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
     inHttpMethods: post
@@ -115,7 +115,21 @@ jwtrequest:
     inHttpMethods: post
     accessToken:
       option: forward
-      scopes: message.read message.write
+  # when user asks to send activation link via email from accounts
+  - in: /accounts/active/email/(.)*/password-secret
+    out: /emails
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: ${REQUEST_SCOPES}
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+ # when user clicks on activation link, this path will be used
+  - in: /accounts/(.)*/active/(.)*
+    out: /users/(.)*/active
+    inHttpMethods: get
+    accessToken:
+      option: request
+      scopes: ${REQUEST_SCOPES}
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/(.)*/(.)*
     out: /emails
@@ -124,9 +138,8 @@ jwtrequest:
       option: forward
   - in: /accounts/(.)*/active/(.)*
     out: /users/(.)*/active
+    inHttpMethods: put
     accessToken:
-      option: request
-      scopes: message.read message.write
-      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+      option: forward
 
 auth-manager-app: ${AUTH_MANAGER_APP_URL}

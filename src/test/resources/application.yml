@@ -141,6 +141,20 @@ requestFilters:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in: accounts/(.)*/active/(.)*
+    out: /users/(.)*/active
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in: accounts/(.)*/active/(.)*
+    out: /authentications/(.)*/active
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
 
 auth-manager-app: http://localhost:9093
 
