@@ -89,6 +89,19 @@ permitpath:
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
 requestFilters:
+  # password reset process, email username
+  - in:  /accounts/email/(.)*/password-secret, /accounts/email/(.)*/authentication-id
+    out: /emails
+    # both inbound http put method
+    inHttpMethods: put
+    accessToken:
+      option: forward
+  # Email account activation link
+  - in: /accounts/active/email-link/(.)*
+    out: /emails
+    inHttpMethods: post
+    accessToken:
+      option: forward
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
     inHttpMethods: post
@@ -110,22 +123,16 @@ requestFilters:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
-  - in: /accounts/active/email-link/(.)*
-    out: /emails
-    inHttpMethods: post
-    accessToken:
-      option: forward
+
   # when user asks to send activation link via email from accounts
   - in: /accounts/active/email/(.)*/password-secret
     out: /emails
     inHttpMethods: put
     accessToken:
-      option: request
-      scopes: ${REQUEST_SCOPES}
-      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
- # when user clicks on activation link, this path will be used
+      option: forward
+ # when user clicks on activation link, activate user and then activate authentication record
   - in: /accounts/(.)*/active/(.)*
-    out: /users/(.)*/active
+    out: /users/(.)*/active, /authentications/(.)*/active
     inHttpMethods: get
     accessToken:
       option: request
@@ -138,6 +145,11 @@ requestFilters:
       option: forward
   - in: /accounts/(.)*/active/(.)*
     out: /users/(.)*/active
+    inHttpMethods: put
+    accessToken:
+      option: forward
+  - in:  /accounts/password-secret
+    out: /authentications/noauth/password
     inHttpMethods: put
     accessToken:
       option: forward

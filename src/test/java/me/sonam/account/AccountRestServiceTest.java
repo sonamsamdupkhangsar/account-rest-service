@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -48,9 +49,10 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
-import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 
 @EnableAutoConfiguration
@@ -72,6 +74,7 @@ public class AccountRestServiceTest {
     @Autowired
     private WebTestClient webTestClient;
 
+
     @Autowired
     ApplicationContext context;
 
@@ -82,7 +85,7 @@ public class AccountRestServiceTest {
                 // add Spring Security test Support
                 .apply(springSecurity())
                 .configureClient()
-                .filter(basicAuthentication("user", "password"))
+               // .filter(basicAuthentication("user", "password"))
                 .build();
     }
     private static MockWebServer mockWebServer;
@@ -159,6 +162,14 @@ public class AccountRestServiceTest {
         PasswordSecret passwordSecret = new PasswordSecret(authenticationId, "mysecret", ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime().plusHours(1));
         passwordSecretRepository.save(passwordSecret).subscribe(passwordSecret1 -> LOG.info("save password secret"));
 
+        final String clientCredentialResponse = "{" +
+                "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+                "    \"scope\": \"message.read message.write\"," +
+                "    \"token_type\": \"Bearer\"," +
+                "    \"expires_in\": 299" +
+                "}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
         mockWebServer.enqueue(new MockResponse().setResponseCode(200)
                 .setHeader("Content-Type", "application/json")
                 .setBody("{\"message\":\"password updated\"}"));
@@ -174,6 +185,11 @@ public class AccountRestServiceTest {
         LOG.info("response from accounts/authentications/password update: {}", result.getResponseBody());
         assertThat(result.getResponseBody().get("message")).isEqualTo("password updated");
         RecordedRequest request = mockWebServer.takeRequest();
+
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("PUT");
         assertThat(request.getPath()).isEqualTo("/authentications/noauth/password");
 
@@ -358,6 +374,9 @@ public class AccountRestServiceTest {
     @Test
     public void emailActivationLink() throws InterruptedException {
         String emailTo = "emailActivationLink@sonam.co";
+        Jwt jwt = jwt("someuser");
+
+//        when(this.jwtDecoder.decode(
         UUID userId = UUID.randomUUID();
         Account account = new Account(emailTo, emailTo, false, LocalDateTime.now(), userId);
         accountRepository.save(account).subscribe(account1 -> LOG.info("saved account with email"));
@@ -367,21 +386,22 @@ public class AccountRestServiceTest {
                 "    \"token_type\": \"Bearer\"," +
                 "    \"expires_in\": 299" +
                 "}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+       // mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
 
-
-        EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/active/email/"+emailTo+"/password-secret")
-                .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
+        final String token = "eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ";
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).put().uri("/accounts/active/email/"+emailTo+"/password-secret")
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token)).exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message")) ;
         RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("POST");
+       /* assertThat(request.getMethod()).isEqualTo("POST");
         assertThat(request.getPath()).startsWith("/oauth2/token");
 
 
-        request = mockWebServer.takeRequest();
+        request = mockWebServer.takeRequest();*/
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/emails");
 
@@ -412,21 +432,18 @@ public class AccountRestServiceTest {
                 "    \"token_type\": \"Bearer\"," +
                 "    \"expires_in\": 299" +
                 "}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+      //  mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         final String emailMsg = " {\"message\":\"email successfully sent\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(201).setBody(emailMsg));//"Account created successfully.  Check email for activating account"));
-
-
+        Jwt jwt = jwt("someuser");
+        final String token = "eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ";
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         EntityExchangeResult<Map> result = webTestClient.put().uri("/accounts/active/email/"+emailTo+"/password-secret")
-                .exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token)).exchange().expectStatus().isOk().expectBody(Map.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody().get("message")) ;
         RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/oauth2/token");
 
-
-        request = mockWebServer.takeRequest();
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/emails");
 
@@ -1041,7 +1058,7 @@ public class AccountRestServiceTest {
         passwordSecretRepository.existsById(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
         accountRepository.existsByAuthenticationId(authId).subscribe(aBoolean -> LOG.info("is true?: {}", aBoolean));
     }
-  //  @MockBean
+    @MockBean
     private ReactiveJwtDecoder jwtDecoder;
 
     private final String tokenValue ="";

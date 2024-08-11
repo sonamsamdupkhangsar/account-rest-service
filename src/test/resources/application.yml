@@ -131,9 +131,7 @@ requestFilters:
     out: /emails
     inHttpMethods: put
     accessToken:
-      option: request
-      scopes: message.read message.write
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      option: forward
   - in: /accounts/email/(.)*/password-secret
     out: /emails
     inHttpMethods: put
@@ -155,6 +153,13 @@ requestFilters:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in:  /accounts/password-secret
+    out: /authentications/noauth/password
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
 
 auth-manager-app: http://localhost:9093
 
