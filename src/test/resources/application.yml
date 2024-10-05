@@ -81,7 +81,7 @@ permitpath:
     httpMethods: PUT
   - path: /accounts/email/*/password-secret
     httpMethods: PUT
-  - path: /accounts/*/*
+  - path: /accounts/*/*/*
     httpMethods: POST
   - path: /accounts/email/*/authentication-id
     httpMethods: PUT
@@ -91,32 +91,75 @@ permitpath:
     httpMethods: PUT
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
-jwtrequest:
+requestFilters:
   - in: /accounts/(.)*/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/emailmysecret/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
-
+  - in: /accounts/email/(.)*/authentication-id
+    out: /emails
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in: /accounts/active/email/(.)*/password-secret
+    out: /emails
+    inHttpMethods: put
+    accessToken:
+      option: forward
+  - in: /accounts/email/(.)*/password-secret
+    out: /emails
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in: accounts/(.)*/active/(.)*
+    out: /users/(.)*/active
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in: accounts/(.)*/active/(.)*
+    out: /authentications/(.)*/active
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  - in:  /accounts/password-secret
+    out: /authentications/noauth/password
+    inHttpMethods: put
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
 
 auth-manager-app: http://localhost:9093
 

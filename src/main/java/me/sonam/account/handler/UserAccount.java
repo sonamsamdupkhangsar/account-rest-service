@@ -23,4 +23,5 @@ public interface UserAccount {
     Mono<String> validateEmailLoginSecret(String email, String secret);
     Mono<String> delete(ServerRequest serverRequest);
     Mono<String> updateAuthenticationPassword(String email, String secret, String password);
+    Mono<String> deleteMyData();
 }

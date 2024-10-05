@@ -1,6 +1,7 @@
 logging:
   level:
-    root: error
+    root: warn
+    com.nextflix: off
     me:
       sonam: info
 info:
@@ -31,7 +32,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URI}
-          audiences: ${OAUTH_AUDIENCES}
+          audiences: oauth-client, b4dfe3fb-1692-44b8-92ab-366ccc84b539-authzmanager
 
 user-rest-service:
     root: http://user-rest-service
@@ -87,40 +88,70 @@ permitpath:
     scopes: message.write
 
 # request to create a jwt token for outbound `email` path when any requestcomes into /accounts/(.)* path (regex)
-jwtrequest:
+requestFilters:
+  # password reset process, email username
+  - in:  /accounts/email/(.)*/password-secret, /accounts/email/(.)*/authentication-id
+    out: /emails
+    # both inbound http put method
+    inHttpMethods: put
+    accessToken:
+      option: forward
+  # Email account activation link
+  - in: /accounts/active/email-link/(.)*
+    out: /emails
+    inHttpMethods: post
+    accessToken:
+      option: forward
   - in:  /accounts/emailactivationlink/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/emailmysecret/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/email/authenticationId/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
-  - in: /accounts/active/email-link/(.)*
+
+  # when user asks to send activation link via email from accounts
+  - in: /accounts/active/email/(.)*/password-secret
     out: /emails
+    inHttpMethods: put
     accessToken:
       option: forward
-      scopes: message.read message.write
+ # when user clicks on activation link, activate user and then activate authentication record
+  - in: /accounts/(.)*/active/(.)*
+    out: /users/(.)*/active, /authentications/(.)*/active
+    inHttpMethods: get
+    accessToken:
+      option: request
+      scopes: ${REQUEST_SCOPES}
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /accounts/(.)*/(.)*
     out: /emails
+    inHttpMethods: post
     accessToken:
       option: forward
   - in: /accounts/(.)*/active/(.)*
     out: /users/(.)*/active
+    inHttpMethods: put
     accessToken:
-      option: request
-      scopes: message.read message.write
-      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+      option: forward
+  - in:  /accounts/password-secret
+    out: /authentications/noauth/password
+    inHttpMethods: put
+    accessToken:
+      option: forward
 
 auth-manager-app: ${AUTH_MANAGER_APP_URL}

@@ -86,7 +86,7 @@ envs:
   - name: ISSUER_URI
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_AUDIENCES
-    value: oauth-client
+    value: oauth-client, b4dfe3fb-1692-44b8-92ab-366ccc84b539-authzmanager
   - name: NEW_RELIC_ENABLED
     value: false
 

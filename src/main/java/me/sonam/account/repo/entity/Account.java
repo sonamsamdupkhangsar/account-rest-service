@@ -15,6 +15,7 @@ public class Account implements Persistable<UUID> {
     @Id
     private UUID id;
     private String authenticationId;    //this should be unique
+    private UUID userId;
     private String email;               // this should be unique
     private Boolean active;
     private LocalDateTime accessDateTime;
@@ -25,13 +26,14 @@ public class Account implements Persistable<UUID> {
     public Account() {
     }
 
-    public Account(String authenticationId, String email, Boolean active, LocalDateTime localDateTime) {
+    public Account(String authenticationId, String email, Boolean active, LocalDateTime localDateTime, UUID userId) {
         this.newAccount = true;
         this.id = UUID.randomUUID();
         this.email = email;
         this.authenticationId = authenticationId;
         this.active = active;
         this.accessDateTime = localDateTime;
+        this.userId = userId;
     }
 
     public UUID getId() {
@@ -69,6 +71,14 @@ public class Account implements Persistable<UUID> {
 
     public void setNewAccount(boolean newAccount) {
         this.newAccount = newAccount;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public String getAuthenticationId() {

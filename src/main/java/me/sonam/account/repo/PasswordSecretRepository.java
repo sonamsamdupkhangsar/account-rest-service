@@ -8,4 +8,5 @@ import java.time.LocalDateTime;
 
 public interface PasswordSecretRepository extends ReactiveCrudRepository<PasswordSecret, String> {
     Mono<Boolean> existsByAuthenticationIdAndSecretAndExpireDateAfter(String authenticationId, String secret, LocalDateTime localDateTime);
+    Mono<Integer> deleteByAuthenticationId(String authenticationId);
 }

@@ -13,6 +13,8 @@ import java.util.UUID;
 
 public interface AccountRepository extends ReactiveCrudRepository<Account, UUID> {
     //@Query("delete from Account where authentiation_id= :authentication_Id and active=true")
+    Mono<Account> findByUserId(UUID userId);
+    Mono<Integer> deleteByUserId(UUID userId);
     Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
     Mono<Boolean> existsByAuthenticationId(String var1);
     Mono<Boolean> existsByEmail(String email);

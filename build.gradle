@@ -13,7 +13,7 @@ plugins {
 group = 'me.sonam'
 version = '1.0'
 description = 'account-rest-service'
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenLocal()
@@ -39,7 +39,7 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-kubernetes-client-all:3.0.3'
     implementation 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
     implementation 'org.postgresql:postgresql:42.3.7'
-    implementation 'me.sonam:token-filter:1.0.2-SNAPSHOT'
+    implementation 'me.sonam:token-filter:1.0.5-SNAPSHOT'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6'
     implementation 'io.projectreactor:reactor-test'
     testImplementation 'io.r2dbc:r2dbc-h2:1.0.0.RELEASE'
@@ -49,6 +49,14 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:okhttp:4.0.1'
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.0.1'
     compileOnly 'org.projectlombok:lombok:1.18.20'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+// Apply a specific Java toolchain to ease working on different environments.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 tasks.withType(JavaCompile) {
