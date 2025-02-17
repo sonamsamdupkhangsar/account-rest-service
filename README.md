@@ -207,3 +207,4 @@ flowchart TD
 ```
 
 If Account is not getting activated, try resend email activation link
+
